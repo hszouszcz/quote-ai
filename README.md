@@ -11,7 +11,7 @@
 
 ## Project Description
 
-AI Estimation is an automated system designed to generate IT project quotations using AI. It streamlines the quoting process by allowing users to input detailed project descriptions (up to 100000 characters), select target platforms, and choose an estimation type (Fixed Price or Time & Material). The system automatically generates a comprehensive project scope, including task breakdowns, man-day calculations (based on 5-6 working hours per day), and applies a minimum buffer of 30% to account for potential complexities.
+AI Estimation is an automated system designed to generate IT project quotations using AI. It streamlines the quoting process by allowing users to input detailed project descriptions (up to 10000 characters), select target platforms, and choose an estimation type (Fixed Price or Time & Material). The system automatically generates a comprehensive project scope, including task breakdowns, man-day calculations (based on 5-6 working hours per day), and applies a minimum buffer of 30% to account for potential complexities.
 
 Additional features include:
 - OAuth-based user authentication for secure access.
@@ -66,7 +66,7 @@ The following scripts are available in the project:
 
 The project focuses on automating the creation of IT project quotations. Key functionalities include:
 
-- Input of a detailed project description (up to 100000 characters) with robust validation.
+- Input of a detailed project description (up to 10000 characters) with robust validation.
 - Selection of project platforms (e.g., frontend, backend, iOS, Android) via checkboxes (at least one must be selected).
 - Choice of estimation type: Fixed Price or Time & Material.
 - Automatic generation of project scope including task breakdowns and man-day calculations, with a built-in buffer of at least 30%.

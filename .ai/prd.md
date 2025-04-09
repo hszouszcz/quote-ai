@@ -1,13 +1,13 @@
 # Dokument wymagań produktu (PRD) - AI Wycena
 
 ## 1. Przegląd produktu
-Projekt "AI Wycena" to system automatyzujący generowanie wycen projektów IT przy użyciu modelu AI. Aplikacja umożliwia użytkownikom wprowadzenie szczegółowego opisu projektu (do 100000 znaków), wybór platform (np. frontend, backend, iOS, Android) przy pomocy checkboxów oraz określenie typu wyceny (Fixed Price lub Time & Material). System automatycznie generuje scope projektu wraz z podziałem zadań, wyliczeniem man-days bazującym na stałych 5-6 godzinach pracy dziennie oraz dodanym buforem minimum 30%. Dodatkowo, aplikacja oferuje mechanizmy autoryzacji oparte na OAuth, ocenę wygenerowanej wyceny oraz zapewnia standardowe zabezpieczenia danych.
+Projekt "AI Wycena" to system automatyzujący generowanie wycen projektów IT przy użyciu modelu AI. Aplikacja umożliwia użytkownikom wprowadzenie szczegółowego opisu projektu (do 10000 znaków), wybór platform (np. frontend, backend, iOS, Android) przy pomocy checkboxów oraz określenie typu wyceny (Fixed Price lub Time & Material). System automatycznie generuje scope projektu wraz z podziałem zadań, wyliczeniem man-days bazującym na stałych 5-6 godzinach pracy dziennie oraz dodanym buforem minimum 30%. Dodatkowo, aplikacja oferuje mechanizmy autoryzacji oparte na OAuth, ocenę wygenerowanej wyceny oraz zapewnia standardowe zabezpieczenia danych.
 
 ## 2. Problem użytkownika
 Softwarehouse i inne firmy technologiczne borykają się z problemem czasochłonnych i kosztownych wycen projektów IT, które wymagają angażowania deweloperów, opóźniając tym samym proces odpowiedzi do klienta. Brak automatyzacji w tym obszarze prowadzi do nieefektywnego wykorzystania zasobów oraz ryzyka błędnych wyliczeń, co może negatywnie wpływać na satysfakcję klienta i konkurencyjność firmy.
 
 ## 3. Wymagania funkcjonalne
-- Formularz umożliwiający wprowadzenie opisu projektu do 100000 znaków z zaawansowaną walidacją tekstu.
+- Formularz umożliwiający wprowadzenie opisu projektu do 10000 znaków z zaawansowaną walidacją tekstu.
 - Checkboxy umożliwiające wybór platform (np. frontend, backend, iOS, Android) oraz typu wyceny (Fixed Price lub Time & Material), przy czym wybór przynajmniej jednej platformy jest obowiązkowy.
 - Automatyczne generowanie szczegółowego scope'u projektu, z wyliczeniem man-days opartym na stałych 5-6 godzinach pracy dziennie oraz dodanym buforem minimum 30% (z możliwością zwiększenia dla bardziej złożonych projektów).
 - Mechanizm autoryzacji użytkowników oparty na OAuth (bez opcji logowania społecznościowego).
@@ -37,9 +37,9 @@ Softwarehouse i inne firmy technologiczne borykają się z problemem czasochłon
 ### US-002: Wprowadzanie długiego opisu projektu
 - ID: US-002
 - Tytuł: Wprowadzanie długiego opisu projektu
-- Opis: Jako użytkownik chcę wprowadzić szczegółowy opis projektu (do 100000 znaków) z walidacją tekstu, aby upewnić się, że dane są kompletne i poprawne.
+- Opis: Jako użytkownik chcę wprowadzić szczegółowy opis projektu (do 10000 znaków) z walidacją tekstu, aby upewnić się, że dane są kompletne i poprawne.
 - Kryteria akceptacji:
-  - Formularz przyjmuje opis do 100000 znaków.
+  - Formularz przyjmuje opis do 10000 znaków.
   - Walidacja tekstu wykrywa błędy, np. przekroczenie limitu znaków.
   - System wyświetla jasne komunikaty walidacyjne.
 
