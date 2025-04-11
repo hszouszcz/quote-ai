@@ -15,7 +15,8 @@
    - Represents the many-to-many relationship between quotations and platforms
 
 5. **Quotation Tasks** (from the `quotation_tasks` table)
-   - Fields: `id`, `quotation_id`, `task_description`, `created_at`
+   - Fields: `id`, `quotation_id`, `task_description`, `man_days`, `created_at`
+   - The `man_days` field represents the estimated effort for each specific task
 
 6. **Reviews** (from the `reviews` table)
    - Fields: `id`, `quotation_id`, `rating`, `comment`, `created_at`
@@ -61,7 +62,7 @@
   - **Response**: JSON array of quotations with pagination meta data.
 
 - **POST** `/api/quotations`
-  - **Description**: Create a new quotation. This endpoint handles project descriptions, selected platforms, and estimation types. It automatically calculates man-days and applies a minimum 30% buffer based on business logic.
+  - **Description**: Create a new quotation. This endpoint handles project descriptions, selected platforms, and estimation types. It automatically generates tasks with individual man-days estimations and applies a minimum 30% buffer based on the total estimated effort.
   - **Request Body** (JSON):
     ```json
     {
@@ -71,7 +72,11 @@
       "dynamic_attributes": { /* optional */ }
     }
     ```
-  - **Response**: 201 Created with the complete quotation object including computed `man_days` and `buffer`.
+  - **Response**: 201 Created with the complete quotation object including:
+    - Generated tasks with individual `man_days` estimations
+    - Total buffer calculated as 30% of the sum of all task estimations
+    - Platform associations
+    - AI reasoning for the estimations
   - **Error Conditions**: Returns 400 Bad Request if the `scope` exceeds 10000 characters or if required fields are missing.
 
 - **GET** `/api/quotations/{id}`
