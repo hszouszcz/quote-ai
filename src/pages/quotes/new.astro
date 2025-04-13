@@ -1,0 +1,11 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import { QuotationForm } from "@/components/quotation/QuotationForm";
+---
+
+<Layout title="New Quotation">
+  <main class="container mx-auto py-8 px-4">
+    <h1 class="text-3xl font-bold mb-8">Create New Quotation</h1>
+    <QuotationForm client:load />
+  </main>
+</Layout>

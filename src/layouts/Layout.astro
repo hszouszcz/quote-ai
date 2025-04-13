@@ -1,11 +1,12 @@
 ---
 import "../styles/global.css";
+import Navigation from "@/components/Navigation.astro";
 
 interface Props {
   title?: string;
 }
 
-const { title = "10x Astro Starter" } = Astro.props;
+const { title = "AI Wycena" } = Astro.props;
 ---
 
 <!doctype html>
@@ -18,7 +19,10 @@ const { title = "10x Astro Starter" } = Astro.props;
     <title>{title}</title>
   </head>
   <body>
-    <slot />
+    <Navigation />
+    <div class="pt-16">
+      <slot />
+    </div>
   </body>
 </html>
 
