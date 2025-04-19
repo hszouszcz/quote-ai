@@ -1,0 +1,15 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import { DetailedQuotationPage } from "@/components/quotations/DetailedQuotationPage";
+
+const { id } = Astro.params;
+if (!id) {
+  return new Response("Missing quotation ID", { status: 404 });
+}
+---
+
+<Layout title="Szczegóły wyceny">
+  <main class="container mx-auto py-8 px-4">
+    <DetailedQuotationPage client:load quotationId={id} />
+  </main>
+</Layout>

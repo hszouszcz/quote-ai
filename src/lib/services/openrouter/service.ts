@@ -113,7 +113,7 @@ export class OpenRouterService {
     this.defaultParams = config.params;
   }
 
-  public async executeRequest(input: RequestPayload): Promise<ResponsePayload> {
+  public async executeRequest(input: RequestPayload): Promise<ResponsePayload | MistralResponse> {
     return new Promise((resolve, reject) => {
       const queuedRequest: QueuedRequest = {
         payload: input,
@@ -127,7 +127,10 @@ export class OpenRouterService {
     });
   }
 
-  private async _executeRequestWithRetry(payload: RequestPayload, attempt = 1): Promise<ResponsePayload> {
+  private async _executeRequestWithRetry(
+    payload: RequestPayload,
+    attempt = 1
+  ): Promise<ResponsePayload | MistralResponse> {
     try {
       if (!this._validatePayload(payload)) {
         throw new OpenRouterValidationError("Invalid request payload");
@@ -242,44 +245,22 @@ export class OpenRouterService {
     };
   }
 
-  private _handleResponse(rawResponse: unknown): ResponsePayload {
+  private _handleResponse(rawResponse: unknown): ResponsePayload | MistralResponse {
     if (!rawResponse || typeof rawResponse !== "object") {
       throw new OpenRouterValidationError("Invalid response format");
     }
 
-    // Development logging
-    if (process.env.NODE_ENV !== "production") {
-      console.group("OpenRouter Response");
-      console.dir(rawResponse, { depth: null });
-      console.groupEnd();
+    // Check if it's a Mistral response
+    if (this.modelType === "mistral" && "choices" in rawResponse) {
+      return rawResponse as MistralResponse;
     }
 
-    if (this.modelType === "mistral") {
-      const response = rawResponse as MistralResponse;
-      if (!response.choices?.[0]?.message?.content) {
-        throw new OpenRouterValidationError("Invalid Mistral response format");
-      }
-
-      return {
-        result: response.choices[0].message.content,
-        metadata: {
-          model: response.model,
-          usage: response.usage,
-          created: response.created,
-        },
-      };
-    } else {
-      // OpenAI format
-      const response = rawResponse as OpenAIResponse;
-      if (!response.result) {
-        throw new OpenRouterValidationError("Response missing required 'result' field");
-      }
-
-      return {
-        result: response.result,
-        metadata: response.metadata || {},
-      };
+    // Handle OpenAI format
+    if ("result" in rawResponse) {
+      return rawResponse as ResponsePayload;
     }
+
+    throw new OpenRouterValidationError("Unexpected response format");
   }
 
   private _validatePayload(payload: RequestPayload): boolean {

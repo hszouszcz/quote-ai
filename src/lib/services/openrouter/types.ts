@@ -89,6 +89,6 @@ export interface QueuedRequest {
   payload: RequestPayload;
   priority: number;
   timestamp: number;
-  resolve: (value: ResponsePayload) => void;
+  resolve: (value: ResponsePayload | MistralResponse) => void;
   reject: (error: Error) => void;
 }

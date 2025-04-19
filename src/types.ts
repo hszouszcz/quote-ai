@@ -48,7 +48,11 @@ export interface CreateQuotationCommand {
 export type UpdateQuotationCommand = Partial<CreateQuotationCommand>;
 
 // Quotation DTO representing a complete quotation record
-export type QuotationDTO = QuotationRow;
+export type QuotationDTO = QuotationRow & {
+  platforms: string[];
+  tasks: QuotationTaskDTO[];
+  review?: ReviewDTO | null;
+};
 
 // ==============================
 // Quotation Tasks DTOs and Commands

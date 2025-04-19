@@ -1,6 +1,6 @@
 import type { Json } from "../../db/database.types";
 import { OpenRouterService } from "./openrouter/service";
-import type { OpenRouterConfig } from "./openrouter/types";
+import type { OpenRouterConfig, ResponsePayload, MistralResponse } from "./openrouter/types";
 
 export interface AITaskAnalysis {
   description: string;
@@ -52,6 +52,24 @@ const openRouterConfig: OpenRouterConfig = {
 
 const openRouterService = new OpenRouterService(openRouterConfig);
 
+function extractJsonFromText(text: string): string {
+  // Remove markdown code block markers if present
+  text = text
+    .replace(/```json\n/g, "")
+    .replace(/```\n/g, "")
+    .replace(/```/g, "");
+
+  // Find the first { and last } to extract the JSON object
+  const start = text.indexOf("{");
+  const end = text.lastIndexOf("}");
+
+  if (start === -1 || end === -1) {
+    throw new Error("No JSON object found in response");
+  }
+
+  return text.slice(start, end + 1);
+}
+
 /**
  * Analyzes project scope and generates estimation with tasks using OpenRouter LLM
  */
@@ -100,10 +118,42 @@ Analyze this project and provide a detailed estimation in the required JSON form
       response_format: openRouterConfig.responseSchema,
     });
 
-    const result = JSON.parse(response.result) as AIProjectAnalysis;
+    // Handle different response formats
+    let jsonStr: string;
+    if (isOpenAIResponse(response)) {
+      jsonStr = response.result;
+    } else if (isMistralResponse(response)) {
+      const content = response.choices[0].message.content;
+      jsonStr = extractJsonFromText(content);
+    } else {
+      throw new Error("Unexpected response format");
+    }
+
+    const result = JSON.parse(jsonStr);
+
+    if (!result.tasks || !Array.isArray(result.tasks)) {
+      throw new Error("Invalid response format: missing tasks array");
+    }
+
     return result;
   } catch (error) {
     console.error("Error analyzing project:", error);
     throw new Error("Failed to analyze project scope");
   }
+}
+
+function isOpenAIResponse(response: unknown): response is ResponsePayload {
+  return typeof response === "object" && response !== null && "result" in response;
+}
+
+function isMistralResponse(response: unknown): response is MistralResponse {
+  if (typeof response !== "object" || response === null) return false;
+
+  const choices = (response as { choices?: unknown[] }).choices;
+  if (!Array.isArray(choices) || choices.length === 0) return false;
+
+  const firstChoice = choices[0] as { message?: { content?: unknown } };
+  if (!firstChoice.message || typeof firstChoice.message.content !== "string") return false;
+
+  return true;
 }
