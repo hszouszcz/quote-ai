@@ -3,6 +3,14 @@ import type { APIRoute } from "astro";
 import type { Json } from "../../db/database.types";
 import { analyzeProject } from "../../lib/services/ai.service";
 import { DEFAULT_USER_ID } from "../../db/supabase.client";
+import { listQuotations } from "../../lib/services/quotation.service";
+import type { SupabaseClient } from "@supabase/supabase-js";
+
+// Lokalny interfejs dla typizacji locals
+interface Locals {
+  supabase: SupabaseClient;
+  user: { id: string } | null;
+}
 
 // Validation schema for the request body
 const createQuotationSchema = z.object({
@@ -17,11 +25,19 @@ const applyBuffer = (totalManDays: number): number => {
   return Math.ceil(totalManDays * 0.3); // 30% buffer
 };
 
+// Schema walidacji parametrów zapytania
+const QueryParamsSchema = z.object({
+  page: z.coerce.number().int().positive().default(1),
+  limit: z.coerce.number().int().positive().default(10),
+  sort: z.string().optional(),
+  filter: z.string().optional(),
+});
+
 export const prerender = false;
 
 export const POST: APIRoute = async ({ request, locals }) => {
   try {
-    const { supabase } = locals;
+    const { supabase } = locals as Locals;
 
     // Parse and validate request body
     const body = await request.json();
@@ -152,5 +168,54 @@ export const POST: APIRoute = async ({ request, locals }) => {
       status: 500,
       headers: { "Content-Type": "application/json" },
     });
+  }
+};
+
+export const GET: APIRoute = async ({ request, locals }) => {
+  try {
+    const { supabase } = locals as Locals;
+
+    // Tymczasowo używamy stałego ID użytkownika
+    const userId = DEFAULT_USER_ID;
+
+    // Parsowanie i walidacja parametrów zapytania
+    const url = new URL(request.url);
+    const queryParams = Object.fromEntries(url.searchParams.entries());
+    const validatedParams = QueryParamsSchema.safeParse(queryParams);
+
+    if (!validatedParams.success) {
+      return new Response(
+        JSON.stringify({
+          error: "Invalid query parameters",
+          details: validatedParams.error.errors,
+        }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    // Pobieranie danych przy użyciu serwisu
+    const result = await listQuotations(supabase, {
+      userId,
+      ...validatedParams.data,
+    });
+
+    return new Response(JSON.stringify(result), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+  } catch (error) {
+    console.error("Error in GET /api/quotations:", error);
+    return new Response(
+      JSON.stringify({
+        error: "Internal Server Error",
+      }),
+      {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      }
+    );
   }
 };

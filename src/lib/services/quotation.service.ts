@@ -1,6 +1,8 @@
 import { PostgrestError } from "@supabase/supabase-js";
 import type { UpdateQuotationInput } from "../schemas/quotation.schema";
 import type { QuotationDTO } from "../../types";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Json } from "../../db/database.types";
 
 export class QuotationNotFoundError extends Error {
   constructor(message = "Quotation not found") {
@@ -10,8 +12,7 @@ export class QuotationNotFoundError extends Error {
 }
 
 export class QuotationService {
-  // constructor(private readonly supabase: SupabaseClient) {}
-  constructor(private readonly supabase: any) {}
+  constructor(private readonly supabase: SupabaseClient) {}
 
   private handleDatabaseError(error: PostgrestError): never {
     console.error("Database error:", error);
@@ -99,4 +100,128 @@ export class QuotationService {
       throw new Error("Failed to delete quotation");
     }
   }
+}
+
+export interface ListQuotationsParams {
+  userId: string;
+  page: number;
+  limit: number;
+  sort?: string;
+  filter?: string;
+}
+
+export interface PaginationMeta {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+}
+
+export interface ListQuotationsResult {
+  data: QuotationDTO[];
+  pagination: PaginationMeta;
+}
+
+// Typy dla obiektów powiązanych
+interface QuotationPlatform {
+  platform_id: string;
+}
+
+interface QuotationTask {
+  id: string;
+  quotation_id: string;
+  task_description: string;
+  man_days: number;
+  created_at: string;
+}
+
+interface Review {
+  id: string;
+  quotation_id: string;
+  rating: number;
+  comment: string | null;
+  created_at: string;
+}
+
+// Zdefiniujmy typy dla struktur danych z bazy
+interface QuotationRecord {
+  id: string;
+  user_id: string;
+  estimation_type: string;
+  scope: string;
+  man_days: number;
+  buffer: number;
+  dynamic_attributes: Json;
+  created_at: string;
+  updated_at: string;
+  platforms?: QuotationPlatform[];
+  tasks?: QuotationTask[];
+  review?: Review[];
+}
+
+export async function listQuotations(
+  supabase: SupabaseClient,
+  params: ListQuotationsParams
+): Promise<ListQuotationsResult> {
+  const { userId, page, limit, sort, filter } = params;
+  const offset = (page - 1) * limit;
+
+  // Budowanie zapytania bazowego
+  let query = supabase
+    .from("quotations")
+    .select(
+      `
+      *,
+      platforms:quotation_platforms(platform_id),
+      tasks:quotation_tasks(*),
+      review:reviews(*)
+    `,
+      { count: "exact" }
+    )
+    .eq("user_id", userId)
+    .range(offset, offset + limit - 1);
+
+  // Dodawanie sortowania
+  if (sort) {
+    const [field, order] = sort.split(":");
+    if (field && order) {
+      query = query.order(field, { ascending: order === "asc" });
+    }
+  } else {
+    // Domyślne sortowanie po dacie utworzenia (od najnowszych)
+    query = query.order("created_at", { ascending: false });
+  }
+
+  // Dodawanie filtrowania
+  if (filter) {
+    query = query.ilike("scope", `%${filter}%`);
+  }
+
+  // Wykonanie zapytania
+  const { data: quotations, error, count } = await query;
+
+  if (error) {
+    console.error("Error fetching quotations:", error);
+    throw new Error("Failed to fetch quotations");
+  }
+
+  // Mapowanie wyników na DTO
+  const quotationsDTO = (quotations as QuotationRecord[]).map(
+    (quotation): QuotationDTO => ({
+      ...quotation,
+      platforms: quotation.platforms?.map((p) => p.platform_id) || [],
+      tasks: quotation.tasks || [],
+      review: quotation.review?.[0] || null,
+    })
+  );
+
+  return {
+    data: quotationsDTO,
+    pagination: {
+      page,
+      limit,
+      total: count || 0,
+      totalPages: count ? Math.ceil(count / limit) : 0,
+    },
+  };
 }
