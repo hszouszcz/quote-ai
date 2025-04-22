@@ -48,11 +48,26 @@ export interface CreateQuotationCommand {
 export type UpdateQuotationCommand = Partial<CreateQuotationCommand>;
 
 // Quotation DTO representing a complete quotation record
-export type QuotationDTO = QuotationRow & {
+export interface QuotationDTO extends QuotationRow {
+  id: string;
+  created_at: string;
+  estimation_type: "Fixed Price" | "Time & Material";
+  scope: string;
   platforms: string[];
+  man_days: number;
+  buffer: number;
   tasks: QuotationTaskDTO[];
   review?: ReviewDTO | null;
-};
+}
+
+// API Response types for Quotations
+export interface QuotationsResponse {
+  quotations: QuotationDTO[];
+  total: number;
+  totalPages: number;
+  currentPage: number;
+  limit: number;
+}
 
 // ==============================
 // Quotation Tasks DTOs and Commands
