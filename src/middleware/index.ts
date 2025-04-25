@@ -1,9 +1,8 @@
 import { defineMiddleware } from "astro:middleware";
-import type { APIContext, MiddlewareNext } from "astro";
 
 import { supabaseClient } from "../db/supabase.client";
 
-export const onRequest = defineMiddleware((context: APIContext, next: MiddlewareNext) => {
+export const onRequest = defineMiddleware((context, next) => {
   context.locals.supabase = supabaseClient;
   return next();
 });

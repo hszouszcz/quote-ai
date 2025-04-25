@@ -33,6 +33,11 @@ Softwarehouse i inne firmy technologiczne borykają się z problemem czasochłon
   - System potwierdza tożsamość użytkownika przed udostępnieniem funkcji.
   - Brak opcji autoryzacji społecznościowej.
   - Użytkownik ma możliwość wylogowania się z systemu.
+  - Uzytkownik moze zalogować się do systemu poprzez przycisk w prawym górnym rogu w sekcji header lub ze strony głównej (landing page)
+  - Odzyskiwanie hasła powinno być mozliwe.
+  - Po zalogowaniu uzytkownik przekierowany jest na widok listy swoich wycen
+  - Logowanie i rejestracja odbywa się na dedykowanych im stronach. 
+  - Niezalogowany uzytkownik przekierowany jest na stronę logowania (landing page)
 
 ### US-002: Wprowadzanie długiego opisu projektu
 - ID: US-002
