@@ -147,7 +147,7 @@ interface Review {
 interface QuotationRecord {
   id: string;
   user_id: string;
-  estimation_type: string;
+  estimation_type: "Fixed Price" | "Time & Material";
   scope: string;
   man_days: number;
   buffer: number;
@@ -203,6 +203,19 @@ export async function listQuotations(
   if (error) {
     console.error("Error fetching quotations:", error);
     throw new Error("Failed to fetch quotations");
+  }
+
+  // Jeśli nie ma wycen, zwróć pustą tablicę z odpowiednią paginacją
+  if (!quotations || quotations.length === 0) {
+    return {
+      data: [],
+      pagination: {
+        page,
+        limit,
+        total: 0,
+        totalPages: 0,
+      },
+    };
   }
 
   // Mapowanie wyników na DTO

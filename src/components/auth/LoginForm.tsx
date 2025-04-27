@@ -80,7 +80,7 @@ export function LoginForm() {
         <CardDescription className="text-center">Zaloguj się do swojego konta aby kontynuować</CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit} noValidate>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-2">
           {errors.form && (
             <p className="text-sm font-medium text-destructive text-center" role="alert">
               {errors.form}

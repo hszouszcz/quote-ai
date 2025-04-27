@@ -14,15 +14,18 @@ const PUBLIC_PATHS = [
 ];
 
 export const onRequest = defineMiddleware(async ({ locals, cookies, url, request, redirect }, next) => {
-  // Pomijamy sprawdzanie autoryzacji dla ścieżek publicznych
-  if (PUBLIC_PATHS.includes(url.pathname)) {
-    return next();
-  }
-
   const supabase = createSupabaseServerInstance({
     cookies,
     headers: request.headers,
   });
+
+  // Dodaj instancję Supabase do locals
+  locals.supabase = supabase;
+
+  // Pomijamy sprawdzanie autoryzacji dla ścieżek publicznych
+  if (PUBLIC_PATHS.includes(url.pathname)) {
+    return next();
+  }
 
   // WAŻNE: Zawsze najpierw pobieramy sesję użytkownika przed innymi operacjami
   const {

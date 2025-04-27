@@ -3,11 +3,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { registerSchema, type RegisterFormData } from "@/lib/schemas/auth";
 
 export function RegisterForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [success, setSuccess] = useState(false);
   const [formData, setFormData] = useState<RegisterFormData>({
     email: "",
     password: "",
@@ -33,6 +35,7 @@ export function RegisterForm() {
     e.preventDefault();
     setIsLoading(true);
     setErrors({});
+    setSuccess(false);
 
     const result = registerSchema.safeParse(formData);
     if (!result.success) {
@@ -61,13 +64,42 @@ export function RegisterForm() {
         throw new Error(data.error || "Wystąpił błąd podczas rejestracji");
       }
 
-      window.location.href = "/auth/login?registered=true";
+      if (data.needsEmailConfirmation) {
+        setSuccess(true);
+        setFormData({ email: "", password: "", confirmPassword: "" });
+      } else {
+        window.location.href = "/auth/login?registered=true";
+      }
     } catch (err) {
       setErrors({ form: err instanceof Error ? err.message : "Wystąpił nieoczekiwany błąd" });
     } finally {
       setIsLoading(false);
     }
   };
+
+  if (success) {
+    return (
+      <Card className="w-full max-w-md mx-auto shadow-lg">
+        <CardHeader className="space-y-2">
+          <CardTitle className="text-2xl font-bold text-center">Sprawdź swoją skrzynkę</CardTitle>
+          <CardDescription className="text-center">
+            Na Twój adres email wysłaliśmy link aktywacyjny. Kliknij w niego, aby potwierdzić rejestrację.
+          </CardDescription>
+        </CardHeader>
+        <CardFooter className="flex flex-col pt-6 pb-6">
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full font-medium"
+            size="lg"
+            onClick={() => (window.location.href = "/auth/login")}
+          >
+            Wróć do logowania
+          </Button>
+        </CardFooter>
+      </Card>
+    );
+  }
 
   return (
     <Card className="w-full max-w-md mx-auto shadow-lg">
@@ -78,11 +110,11 @@ export function RegisterForm() {
         </CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit} noValidate>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-2">
           {errors.form && (
-            <p className="text-sm font-medium text-destructive text-center" role="alert">
-              {errors.form}
-            </p>
+            <Alert variant="destructive">
+              <AlertDescription>{errors.form}</AlertDescription>
+            </Alert>
           )}
           <div className="space-y-2">
             <Label htmlFor="email" className="text-sm font-medium">
