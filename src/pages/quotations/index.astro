@@ -1,0 +1,28 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import QuotationsListView from "@/components/quotations/QuotationsListView";
+import { createSupabaseServerInstance } from "@/lib/supabase";
+
+// Pobierz dane użytkownika z middleware
+const { user } = Astro.locals;
+
+// Sprawdź czy użytkownik jest zalogowany (dodatkowe zabezpieczenie)
+if (!user) {
+  return Astro.redirect("/auth/login");
+}
+---
+
+<Layout title="Twoje wyceny">
+  <div class="container mx-auto py-6">
+    <div class="flex justify-between items-center mb-6">
+      <h1 class="text-3xl font-bold">Twoje wyceny</h1>
+      <a
+        href="/quotations/new"
+        class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
+      >
+        Stwórz nową wycenę
+      </a>
+    </div>
+    <QuotationsListView client:load userId={user.id} />
+  </div>
+</Layout>

@@ -1,5 +1,20 @@
 ---
 const currentPath = Astro.url.pathname;
+const { user } = Astro.locals;
+
+// Przygotuj linki nawigacyjne
+const links = [
+  {
+    href: "/quotations/new",
+    label: "Stwórz nową wycenę",
+    condition: !!user,
+  },
+  {
+    href: "/quotations",
+    label: "Moje wyceny",
+    condition: !!user,
+  },
+];
 ---
 
 <nav
@@ -9,16 +24,63 @@ const currentPath = Astro.url.pathname;
     <div class="flex items-center justify-between h-16">
       <a href="/" class="text-xl font-bold hover:text-blue-200 transition-colors"> AI Wycena </a>
 
-      <div class="flex space-x-4">
-        <a
-          href="/quotes/new"
-          class={`px-4 py-2 rounded-lg transition-colors ${
-            currentPath === "/quotes/new" ? "bg-white/10 text-blue-200" : "hover:bg-white/5 hover:text-blue-200"
-          }`}
-        >
-          Create New Quotation
-        </a>
+      <div class="flex items-center space-x-4">
+        {
+          links.map(
+            (link) =>
+              link.condition && (
+                <a
+                  href={link.href}
+                  class={`px-4 py-2 rounded-lg transition-colors ${
+                    currentPath === link.href ? "bg-white/10 text-blue-200" : "hover:bg-white/5 hover:text-blue-200"
+                  }`}
+                >
+                  {link.label}
+                </a>
+              )
+          )
+        }
+        {
+          user ? (
+            <button
+              id="logout-button"
+              class="px-4 py-2 rounded-lg transition-colors hover:bg-white/5 hover:text-blue-200"
+            >
+              Wyloguj się
+            </button>
+          ) : (
+            <a href="/auth/login" class="px-4 py-2 rounded-lg transition-colors hover:bg-white/5 hover:text-blue-200">
+              Zaloguj się
+            </a>
+          )
+        }
       </div>
     </div>
   </div>
 </nav>
+
+<script>
+  // Obsługa wylogowania
+  const logoutButton = document.getElementById("logout-button");
+  if (logoutButton) {
+    logoutButton.addEventListener("click", async () => {
+      try {
+        const response = await fetch("/api/auth/logout", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+
+        if (response.ok) {
+          // Po udanym wylogowaniu przekieruj na stronę logowania
+          window.location.href = "/auth/login";
+        } else {
+          console.error("Błąd podczas wylogowywania");
+        }
+      } catch (error) {
+        console.error("Błąd podczas wylogowywania:", error);
+      }
+    });
+  }
+</script>
