@@ -3,34 +3,60 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+
+interface FormState {
+  email: string;
+  errors: {
+    email?: string;
+    submit?: string;
+  };
+  isSubmitting: boolean;
+  isSuccess: boolean;
+}
 
 export function PasswordRecoveryForm() {
-  const [isLoading, setIsLoading] = useState(false);
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [isSubmitted, setIsSubmitted] = useState(false);
-  const [email, setEmail] = useState("");
+  const [formState, setFormState] = useState<FormState>({
+    email: "",
+    errors: {},
+    isSubmitting: false,
+    isSuccess: false,
+  });
 
-  const validateField = (value: string): string => {
-    if (!value.trim()) {
-      return "To pole jest wymagane";
-    }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-      return "Nieprawidłowy format adresu email";
-    }
-    return "";
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormState((prev) => ({
+      ...prev,
+      email: e.target.value,
+      errors: {
+        ...prev.errors,
+        email: undefined,
+      },
+    }));
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setErrors({});
+  const validateEmail = (email: string): string | undefined => {
+    if (!email.trim()) {
+      return "Email jest wymagany";
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return "Nieprawidłowy format adresu email";
+    }
+    return undefined;
+  };
 
-    const error = validateField(email);
-    if (error) {
-      setErrors({ email: error });
-      setIsLoading(false);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const emailError = validateEmail(formState.email);
+    if (emailError) {
+      setFormState((prev) => ({
+        ...prev,
+        errors: { ...prev.errors, email: emailError },
+      }));
       return;
     }
+
+    setFormState((prev) => ({ ...prev, isSubmitting: true, errors: {} }));
 
     try {
       const response = await fetch("/api/auth/recover-password", {
@@ -38,37 +64,50 @@ export function PasswordRecoveryForm() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email: formState.email }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Wystąpił błąd podczas wysyłania instrukcji");
+        throw new Error(data.error || "Wystąpił błąd podczas wysyłania linku resetującego hasło");
       }
 
-      setIsSubmitted(true);
-    } catch (err) {
-      setErrors({ form: err instanceof Error ? err.message : "Wystąpił nieoczekiwany błąd" });
+      setFormState((prev) => ({
+        ...prev,
+        isSuccess: true,
+        errors: {},
+      }));
+    } catch (error) {
+      setFormState((prev) => ({
+        ...prev,
+        errors: {
+          submit: error instanceof Error ? error.message : "Wystąpił nieoczekiwany błąd",
+        },
+      }));
     } finally {
-      setIsLoading(false);
+      setFormState((prev) => ({ ...prev, isSubmitting: false }));
     }
   };
 
-  if (isSubmitted) {
+  if (formState.isSuccess) {
     return (
       <Card className="w-full max-w-md mx-auto shadow-lg">
         <CardHeader className="space-y-2">
           <CardTitle className="text-2xl font-bold text-center">Sprawdź swoją skrzynkę</CardTitle>
           <CardDescription className="text-center">
-            Wysłaliśmy instrukcje resetowania hasła na podany adres email. Sprawdź swoją skrzynkę i postępuj zgodnie z
-            instrukcjami.
+            Wysłaliśmy link do resetowania hasła na adres {formState.email}. Kliknij w niego, aby zresetować hasło.
           </CardDescription>
         </CardHeader>
-        <CardFooter className="flex justify-center pt-6 pb-6">
-          <a href="/auth/login" className="text-primary hover:underline font-medium">
-            Powrót do strony logowania
-          </a>
+        <CardFooter className="flex flex-col pt-6">
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full font-medium"
+            onClick={() => (window.location.href = "/auth/login")}
+          >
+            Wróć do logowania
+          </Button>
         </CardFooter>
       </Card>
     );
@@ -79,56 +118,37 @@ export function PasswordRecoveryForm() {
       <CardHeader className="space-y-2">
         <CardTitle className="text-2xl font-bold text-center">Odzyskiwanie hasła</CardTitle>
         <CardDescription className="text-center">
-          Podaj swój adres email, a wyślemy Ci instrukcje resetowania hasła
+          Podaj swój adres email, a wyślemy Ci link do resetowania hasła
         </CardDescription>
       </CardHeader>
-      <form onSubmit={handleSubmit} noValidate>
-        <CardContent className="space-y-6">
-          {errors.form && (
-            <p className="text-sm font-medium text-destructive text-center" role="alert">
-              {errors.form}
-            </p>
+      <form onSubmit={handleSubmit}>
+        <CardContent className="space-y-4">
+          {formState.errors.submit && (
+            <Alert variant="destructive">
+              <AlertDescription>{formState.errors.submit}</AlertDescription>
+            </Alert>
           )}
           <div className="space-y-2">
-            <Label htmlFor="email" className="text-sm font-medium">
-              Email
-            </Label>
+            <Label htmlFor="email">Email</Label>
             <Input
               id="email"
               type="email"
-              value={email}
-              onChange={(e) => {
-                setEmail(e.target.value);
-                setErrors({});
-              }}
-              onBlur={(e) => {
-                const error = validateField(e.target.value);
-                if (error) {
-                  setErrors({ email: error });
-                }
-              }}
+              value={formState.email}
+              onChange={handleEmailChange}
               placeholder="twoj@email.com"
-              className={errors.email ? "border-destructive" : ""}
-              aria-invalid={errors.email ? "true" : "false"}
-              aria-describedby={errors.email ? "email-error" : undefined}
-              disabled={isLoading}
+              disabled={formState.isSubmitting}
+              className={formState.errors.email ? "border-destructive" : ""}
             />
-            <div className="min-h-[20px]">
-              {errors.email && (
-                <p className="text-sm text-destructive" id="email-error" role="alert">
-                  {errors.email}
-                </p>
-              )}
-            </div>
+            {formState.errors.email && <p className="text-sm text-destructive">{formState.errors.email}</p>}
           </div>
         </CardContent>
-        <CardFooter className="flex flex-col pt-6 pb-6">
-          <Button type="submit" className="w-full font-medium mb-6" size="lg" disabled={isLoading}>
-            {isLoading ? "Wysyłanie..." : "Wyślij instrukcje"}
+        <CardFooter className="flex flex-col pt-6">
+          <Button type="submit" className="w-full font-medium mb-4" disabled={formState.isSubmitting}>
+            {formState.isSubmitting ? "Wysyłanie..." : "Wyślij link resetujący"}
           </Button>
           <div className="text-sm text-center">
             <a href="/auth/login" className="text-primary hover:underline font-medium">
-              Powrót do strony logowania
+              Wróć do logowania
             </a>
           </div>
         </CardFooter>
