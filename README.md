@@ -24,6 +24,7 @@ Additional features include:
 - **Backend:** Supabase (PostgreSQL, authentication, and real-time APIs)
 - **AI Integration:** Openrouter.ai for accessing a range of AI models
 - **CI/CD & Hosting:** GitHub Actions for CI/CD pipelines and DigitalOcean (Docker-based deployment)
+- **Testing:** Vitest and React Testing Library for unit tests; Supertest with Vitest for integration tests
 
 ## Getting Started Locally
 
