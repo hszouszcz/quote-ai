@@ -20,14 +20,14 @@ const openRouterConfig: OpenRouterConfig = {
   modelType: "mistral",
   defaultParams: {
     temperature: 0.7,
-    max_tokens: 10000,
+    max_tokens: 4000,
     top_p: 0.9,
   },
   responseSchema: {
     type: "json_schema",
     json_schema: {
       name: "ProjectAnalysis",
-      strict: true,
+      strict: false,
       schema: {
         type: "object",
         properties: {
@@ -49,6 +49,11 @@ const openRouterConfig: OpenRouterConfig = {
     },
   },
 };
+
+// Validate API key
+if (!openRouterConfig.apiKey) {
+  throw new Error("OPENROUTER_API_KEY environment variable is not set");
+}
 
 const openRouterService = new OpenRouterService(openRouterConfig);
 
@@ -137,7 +142,6 @@ Analyze this project and provide a detailed estimation in the required JSON form
 
     return result;
   } catch (error) {
-    console.error("Error analyzing project:", error);
     throw new Error("Failed to analyze project scope");
   }
 }

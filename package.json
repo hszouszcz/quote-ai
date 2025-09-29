@@ -13,7 +13,17 @@
     "test": "vitest",
     "test:watch": "vitest --watch",
     "test:ui": "vitest --ui",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "db:start": "supabase start",
+    "db:stop": "supabase stop",
+    "db:reset": "supabase db reset",
+    "db:status": "supabase status",
+    "db:migrate": "supabase db push",
+    "db:types": "supabase gen types typescript --local > src/types/database.types.ts",
+    "docker:start": "docker start $(docker ps -aq)",
+    "docker:stop": "docker stop $(docker ps -aq)",
+    "docker:clean": "docker system prune -f",
+    "docker:status": "docker ps -a"
   },
   "dependencies": {
     "@astrojs/node": "^9.1.3",

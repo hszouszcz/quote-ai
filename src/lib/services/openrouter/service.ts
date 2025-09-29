@@ -136,20 +136,26 @@ export class OpenRouterService {
         throw new OpenRouterValidationError("Invalid request payload");
       }
 
+      // console.log("OpenRouter Request:", JSON.stringify(payload, null, 2));
+
       const response = await fetch(this.apiUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${this.apiKey}`,
+          "HTTP-Referer": "http://localhost:4321",
+          "X-Title": "Quote AI",
         },
         body: JSON.stringify(payload),
       });
 
       if (!response?.ok) {
+        const errorText = await response.text();
+
         if (response?.status === 429) {
           throw new OpenRouterRateLimitError("Rate limit exceeded");
         }
-        throw new OpenRouterNetworkError(`API request failed with status ${response?.status}`);
+        throw new OpenRouterNetworkError(`API request failed with status ${response?.status}: ${errorText}`);
       }
 
       const rawResponse = await response.json();
@@ -293,7 +299,5 @@ export class OpenRouterService {
     return true;
   }
 
-  private _logError(error: Error, context: string): void {
-    console.error(`[OpenRouter Error] ${context}:`, error);
-  }
+  private _logError(error: Error, context: string): void {}
 }

@@ -38,6 +38,31 @@ export const POST: APIRoute = async ({ request, locals }) => {
       });
     }
 
+    // Ensure user exists in users table
+    const { data: existingUser } = await supabase.from("users").select("id").eq("id", user.id).single();
+
+    if (!existingUser) {
+      console.log("Creating user in users table:", user.id);
+      const { error: upsertError } = await supabase.from("users").upsert(
+        {
+          id: user.id,
+          email: user.email || "",
+          role: "user",
+        },
+        {
+          onConflict: "id",
+        }
+      );
+
+      if (upsertError) {
+        console.error("Error upserting user in users table:", upsertError);
+        return new Response(JSON.stringify({ error: "Failed to create user" }), {
+          status: 500,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+    }
+
     // Parse and validate request body
     const body = await request.json();
     const validationResult = createQuotationSchema.safeParse(body);
@@ -181,7 +206,6 @@ export const GET: APIRoute = async ({ request, locals }) => {
       headers: { "Content-Type": "application/json" },
     });
   } catch (error) {
-    console.error("Error in GET /api/quotations:", error);
     return new Response(
       JSON.stringify({
         error: "Internal Server Error",

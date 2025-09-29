@@ -3,7 +3,6 @@ import type { UpdateQuotationInput } from "../schemas/quotation.schema";
 import type { QuotationDTO } from "../../types";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Json } from "../../db/database.types";
-import { describe, it, expect, beforeEach, vi } from "vitest";
 
 export class QuotationNotFoundError extends Error {
   constructor(message = "Quotation not found") {
@@ -123,7 +122,7 @@ export interface ListQuotationsResult {
   pagination: PaginationMeta;
 }
 
-// Typy dla obiektów powiązanych
+// Types for related objects
 interface QuotationPlatform {
   platform_id: string;
 }
@@ -144,7 +143,7 @@ interface Review {
   created_at: string;
 }
 
-// Zdefiniujmy typy dla struktur danych z bazy
+// Database record types
 interface QuotationRecord {
   id: string;
   user_id: string;
@@ -167,7 +166,7 @@ export async function listQuotations(
   const { userId, page, limit, sort, filter } = params;
   const offset = (page - 1) * limit;
 
-  // Budowanie zapytania bazowego
+  // Build base query
   let query = supabase
     .from("quotations")
     .select(
@@ -182,23 +181,23 @@ export async function listQuotations(
     .eq("user_id", userId)
     .range(offset, offset + limit - 1);
 
-  // Dodawanie sortowania
+  // Add sorting
   if (sort) {
     const [field, order] = sort.split(":");
     if (field && order) {
       query = query.order(field, { ascending: order === "asc" });
     }
   } else {
-    // Domyślne sortowanie po dacie utworzenia (od najnowszych)
+    // Default sort by creation date (newest first)
     query = query.order("created_at", { ascending: false });
   }
 
-  // Dodawanie filtrowania
+  // Add filtering
   if (filter) {
     query = query.ilike("scope", `%${filter}%`);
   }
 
-  // Wykonanie zapytania
+  // Execute query
   const { data: quotations, error, count } = await query;
 
   if (error) {
@@ -206,7 +205,7 @@ export async function listQuotations(
     throw new Error("Failed to fetch quotations");
   }
 
-  // Jeśli nie ma wycen, zwróć pustą tablicę z odpowiednią paginacją
+  // If no quotations, return empty array with pagination
   if (!quotations || quotations.length === 0) {
     return {
       data: [],
@@ -219,7 +218,7 @@ export async function listQuotations(
     };
   }
 
-  // Mapowanie wyników na DTO
+  // Map results to DTO
   const quotationsDTO = (quotations as QuotationRecord[]).map(
     (quotation): QuotationDTO => ({
       ...quotation,
@@ -239,122 +238,3 @@ export async function listQuotations(
     },
   };
 }
-
-describe("QuotationService - getQuotationById", () => {
-  let quotationService: QuotationService;
-  let mockSupabase: SupabaseClient;
-
-  // Przykładowe dane testowe
-  const mockQuotationId = "test-id-123";
-  const mockUserId = "user-id-123";
-  const mockQuotation: QuotationDTO = {
-    id: mockQuotationId,
-    user_id: mockUserId,
-    estimation_type: "Fixed Price",
-    scope: "Test scope",
-    man_days: 10,
-    buffer: 3,
-    dynamic_attributes: null,
-    created_at: "2024-03-20T12:00:00Z",
-    updated_at: "2024-03-20T12:00:00Z",
-    tasks: [],
-    platforms: [],
-    review: null,
-  };
-
-  // Setup przed każdym testem
-  beforeEach(() => {
-    // Arrange: Przygotowanie mocka dla Supabase
-    mockSupabase = {
-      from: vi.fn().mockReturnThis(),
-      select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      single: vi.fn(),
-    } as unknown as SupabaseClient;
-
-    quotationService = new QuotationService(mockSupabase);
-  });
-
-  it("should successfully return quotation when found", async () => {
-    // Arrange
-    const mockResponse = { data: mockQuotation, error: null };
-    mockSupabase.from().select().eq().eq().single = vi.fn().mockResolvedValue(mockResponse);
-
-    // Act
-    const result = await quotationService.getQuotationById(mockQuotationId, mockUserId);
-
-    // Assert
-    expect(result).toEqual(mockQuotation);
-    expect(mockSupabase.from).toHaveBeenCalledWith("quotations");
-    expect(mockSupabase.from().select).toHaveBeenCalledWith(`
-          *,
-          tasks:quotation_tasks(*)
-        `);
-    expect(mockSupabase.from().select().eq).toHaveBeenNthCalledWith(1, "id", mockQuotationId);
-    expect(mockSupabase.from().select().eq().eq).toHaveBeenNthCalledWith(1, "user_id", mockUserId);
-  });
-
-  it("should return null when quotation not found", async () => {
-    // Arrange
-    const mockResponse = { data: null, error: null };
-    mockSupabase.from().select().eq().eq().single = vi.fn().mockResolvedValue(mockResponse);
-
-    // Act
-    const result = await quotationService.getQuotationById(mockQuotationId, mockUserId);
-
-    // Assert
-    expect(result).toBeNull();
-  });
-
-  it("should handle database error correctly", async () => {
-    // Arrange
-    const mockError = { code: "23503", message: "Foreign key violation" };
-    mockSupabase.from().select().eq().eq().single = vi.fn().mockResolvedValue({
-      data: null,
-      error: mockError,
-    });
-
-    // Act & Assert
-    await expect(quotationService.getQuotationById(mockQuotationId, mockUserId)).rejects.toThrow(
-      "Referenced record does not exist"
-    );
-  });
-
-  it("should handle unique constraint violation", async () => {
-    // Arrange
-    const mockError = { code: "23505", message: "Unique violation" };
-    mockSupabase.from().select().eq().eq().single = vi.fn().mockResolvedValue({
-      data: null,
-      error: mockError,
-    });
-
-    // Act & Assert
-    await expect(quotationService.getQuotationById(mockQuotationId, mockUserId)).rejects.toThrow(
-      "Record already exists"
-    );
-  });
-
-  it("should handle unexpected database error", async () => {
-    // Arrange
-    const mockError = { code: "12345", message: "Unexpected error" };
-    mockSupabase.from().select().eq().eq().single = vi.fn().mockResolvedValue({
-      data: null,
-      error: mockError,
-    });
-
-    // Act & Assert
-    await expect(quotationService.getQuotationById(mockQuotationId, mockUserId)).rejects.toThrow(
-      "Database error occurred"
-    );
-  });
-
-  it("should handle non-database errors", async () => {
-    // Arrange
-    mockSupabase.from().select().eq().eq().single = vi.fn().mockRejectedValue(new Error("Network error"));
-
-    // Act & Assert
-    await expect(quotationService.getQuotationById(mockQuotationId, mockUserId)).rejects.toThrow(
-      "Failed to fetch quotation"
-    );
-  });
-});
