@@ -1,6 +1,4 @@
 import type { APIRoute } from "astro";
-import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "../../../db/database.types";
 
 export const prerender = false;
 
@@ -13,7 +11,25 @@ export const GET: APIRoute = async ({ params, locals }) => {
     });
   }
 
-  const { data: quotation, error } = await supabase.from("quotations").select("*").eq("id", params.id).single();
+  if (!params.id) {
+    return new Response(JSON.stringify({ error: "Invalid quotation ID" }), {
+      status: 400,
+    });
+  }
+
+  const { data: quotation, error } = await supabase
+    .from("quotations")
+    .select(
+      `
+      *,
+      quotation_tasks(*),
+      quotation_platforms(
+        platforms(*)
+      )
+    `
+    )
+    .eq("id", params.id)
+    .single();
 
   if (error) {
     return new Response(JSON.stringify({ error: error.message }), {
@@ -27,13 +43,24 @@ export const GET: APIRoute = async ({ params, locals }) => {
     });
   }
 
-  if (quotation.user_id !== user.id && !quotation.is_public) {
+  if (quotation.user_id !== user.id) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
     });
   }
 
-  return new Response(JSON.stringify(quotation));
+  // Transform the data to match frontend expectations
+  const transformedQuotation = {
+    ...quotation,
+    tasks: quotation.quotation_tasks || [],
+    platforms: quotation.quotation_platforms?.map((qp: { platforms: { id: string } }) => qp.platforms.id) || [],
+  };
+
+  // Remove the raw database relations using destructuring
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { quotation_tasks, quotation_platforms, ...cleanQuotation } = transformedQuotation;
+
+  return new Response(JSON.stringify(cleanQuotation));
 };
 
 export const PUT: APIRoute = async ({ params, request, locals }) => {
@@ -42,6 +69,12 @@ export const PUT: APIRoute = async ({ params, request, locals }) => {
   if (!user) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
+    });
+  }
+
+  if (!params.id) {
+    return new Response(JSON.stringify({ error: "Invalid quotation ID" }), {
+      status: 400,
     });
   }
 
@@ -83,6 +116,12 @@ export const DELETE: APIRoute = async ({ params, locals }) => {
   if (!user) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
+    });
+  }
+
+  if (!params.id) {
+    return new Response(JSON.stringify({ error: "Invalid quotation ID" }), {
+      status: 400,
     });
   }
 

@@ -74,21 +74,18 @@ export interface Database {
           id: string;
           quotation_id: string;
           task_description: string;
-          man_days: number | null;
         };
         Insert: {
           created_at?: string;
           id?: string;
           quotation_id: string;
           task_description: string;
-          man_days?: number | null;
         };
         Update: {
           created_at?: string;
           id?: string;
           quotation_id?: string;
           task_description?: string;
-          man_days?: number | null;
         };
         Relationships: [
           {
@@ -107,6 +104,7 @@ export interface Database {
           dynamic_attributes: Json | null;
           estimation_type: string;
           id: string;
+          man_days: number;
           scope: string;
           updated_at: string;
           user_id: string;
@@ -117,6 +115,7 @@ export interface Database {
           dynamic_attributes?: Json | null;
           estimation_type: string;
           id?: string;
+          man_days: number;
           scope: string;
           updated_at?: string;
           user_id: string;
@@ -127,19 +126,12 @@ export interface Database {
           dynamic_attributes?: Json | null;
           estimation_type?: string;
           id?: string;
+          man_days?: number;
           scope?: string;
           updated_at?: string;
           user_id?: string;
         };
-        Relationships: [
-          {
-            foreignKeyName: "quotations_user_id_fkey";
-            columns: ["user_id"];
-            isOneToOne: false;
-            referencedRelation: "users";
-            referencedColumns: ["id"];
-          },
-        ];
+        Relationships: [];
       };
       reviews: {
         Row: {
@@ -197,41 +189,6 @@ export interface Database {
           session_id?: string;
           user_agent?: string | null;
           user_id?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "sessions_user_id_fkey";
-            columns: ["user_id"];
-            isOneToOne: false;
-            referencedRelation: "users";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
-      users: {
-        Row: {
-          created_at: string;
-          email: string;
-          hashed_password: string;
-          id: string;
-          role: string;
-          updated_at: string;
-        };
-        Insert: {
-          created_at?: string;
-          email: string;
-          hashed_password: string;
-          id?: string;
-          role: string;
-          updated_at?: string;
-        };
-        Update: {
-          created_at?: string;
-          email?: string;
-          hashed_password?: string;
-          id?: string;
-          role?: string;
-          updated_at?: string;
         };
         Relationships: [];
       };

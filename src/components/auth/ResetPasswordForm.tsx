@@ -17,7 +17,11 @@ interface FormState {
   isSuccess: boolean;
 }
 
-export function ResetPasswordForm() {
+interface ResetPasswordFormProps {
+  token: string;
+}
+
+export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
   const [formState, setFormState] = useState<FormState>({
     password: "",
     confirmPassword: "",
@@ -93,7 +97,10 @@ export function ResetPasswordForm() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ password: formState.password }),
+        body: JSON.stringify({
+          password: formState.password,
+          token: token,
+        }),
       });
 
       const data = await response.json();

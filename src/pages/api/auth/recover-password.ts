@@ -17,6 +17,7 @@ const resetPasswordSchema = z.object({
     .regex(/[A-Z]/, "Hasło musi zawierać co najmniej jedną wielką literę")
     .regex(/[a-z]/, "Hasło musi zawierać co najmniej jedną małą literę")
     .regex(/[0-9]/, "Hasło musi zawierać co najmniej jedną cyfrę"),
+  token: z.string().min(1, "Token jest wymagany"),
 });
 
 export const POST: APIRoute = async ({ request, cookies }) => {
@@ -84,15 +85,32 @@ export const PUT: APIRoute = async ({ request, cookies }) => {
       );
     }
 
-    const { password } = result.data;
+    const { password, token } = result.data;
     const supabase = createSupabaseServerInstance({ cookies, headers: request.headers });
 
-    const { error } = await supabase.auth.updateUser({
-      password: password,
+    // Use the token_hash to verify and set new password
+    const { error } = await supabase.auth.verifyOtp({
+      token_hash: token,
+      type: "recovery",
     });
 
     if (error) {
-      console.error("Password update error:", error);
+      console.error("Token verification error:", error);
+      return new Response(
+        JSON.stringify({
+          error: "Nieprawidłowy lub wygasły token resetowania hasła",
+        }),
+        { status: 400 }
+      );
+    }
+
+    // Now update the password
+    const { error: updateError } = await supabase.auth.updateUser({
+      password: password,
+    });
+
+    if (updateError) {
+      console.error("Password update error:", updateError);
       return new Response(
         JSON.stringify({
           error: "Wystąpił błąd podczas aktualizacji hasła",

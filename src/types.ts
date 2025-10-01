@@ -6,7 +6,7 @@
 import type { Database, Json } from "./db/database.types";
 
 // Utility type aliases from database tables
-type UserRow = Database["public"]["Tables"]["users"]["Row"];
+// Note: UserRow removed - we now use auth.users directly via Supabase Auth
 type QuotationRow = Database["public"]["Tables"]["quotations"]["Row"];
 type QuotationTaskRow = Database["public"]["Tables"]["quotation_tasks"]["Row"];
 type PlatformRow = Database["public"]["Tables"]["platforms"]["Row"];
@@ -29,8 +29,16 @@ export interface LoginUserCommand {
   password: string;
 }
 
-// User DTO (response) excluding sensitive info
-export type UserDTO = Omit<UserRow, "hashed_password">;
+// =============================
+// User Types (using Supabase Auth)
+// =============================
+
+// User type from auth.users (simplified for our needs)
+export interface UserDTO {
+  id: string;
+  email: string;
+  role?: string;
+}
 
 // =============================
 // Quotations DTOs and Commands
