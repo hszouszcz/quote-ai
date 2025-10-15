@@ -18,7 +18,7 @@ interface FormState {
 }
 
 interface ResetPasswordFormProps {
-  token: string;
+  token: string | null;
 }
 
 export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
@@ -131,7 +131,9 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
       <Card className="w-full max-w-md mx-auto shadow-lg">
         <CardHeader className="space-y-2">
           <CardTitle className="text-2xl font-bold text-center">Hasło zostało zmienione</CardTitle>
-          <CardDescription className="text-center">Możesz teraz zalogować się używając nowego hasła.</CardDescription>
+          <CardDescription className="text-center">
+            Twoje hasło zostało pomyślnie zaktualizowane. Musisz teraz zalogować się ponownie używając nowego hasła.
+          </CardDescription>
         </CardHeader>
         <CardFooter className="flex flex-col pt-6">
           <Button type="button" className="w-full font-medium" onClick={() => (window.location.href = "/auth/login")}>

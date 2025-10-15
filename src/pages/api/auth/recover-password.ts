@@ -43,7 +43,6 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     });
 
     if (error) {
-      console.error("Password recovery error:", error);
       return new Response(
         JSON.stringify({
           error: "Wystąpił błąd podczas wysyłania linku do resetowania hasła",
@@ -58,8 +57,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       }),
       { status: 200 }
     );
-  } catch (error) {
-    console.error("Password recovery error:", error);
+  } catch {
     return new Response(
       JSON.stringify({
         error: "Wystąpił nieoczekiwany błąd podczas resetowania hasła",
@@ -95,7 +93,6 @@ export const PUT: APIRoute = async ({ request, cookies }) => {
     });
 
     if (error) {
-      console.error("Token verification error:", error);
       return new Response(
         JSON.stringify({
           error: "Nieprawidłowy lub wygasły token resetowania hasła",
@@ -110,7 +107,6 @@ export const PUT: APIRoute = async ({ request, cookies }) => {
     });
 
     if (updateError) {
-      console.error("Password update error:", updateError);
       return new Response(
         JSON.stringify({
           error: "Wystąpił błąd podczas aktualizacji hasła",
@@ -119,14 +115,16 @@ export const PUT: APIRoute = async ({ request, cookies }) => {
       );
     }
 
+    // Sign out the user after password change to force re-authentication
+    await supabase.auth.signOut();
+
     return new Response(
       JSON.stringify({
         message: "Hasło zostało pomyślnie zaktualizowane",
       }),
       { status: 200 }
     );
-  } catch (error) {
-    console.error("Password update error:", error);
+  } catch {
     return new Response(
       JSON.stringify({
         error: "Wystąpił nieoczekiwany błąd podczas aktualizacji hasła",
