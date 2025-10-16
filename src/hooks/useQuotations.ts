@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import type { QuotationDTO } from "@/types";
-import { fetchQuotations } from "@/lib/services/quotationsService";
+import { quotationClientService } from "@/lib/services/quotation.client.service";
 
 // Extend Error for API error type
 interface ApiErrorLike extends Error {
@@ -53,6 +53,8 @@ export function useQuotations(userId?: string): UseQuotationsResult {
     limit: DEFAULT_FILTERS.limit,
   });
   const [retryCounter, setRetryCounter] = useState(0);
+
+  const { fetchQuotations } = quotationClientService;
 
   useEffect(() => {
     const loadQuotations = async () => {

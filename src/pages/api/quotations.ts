@@ -2,7 +2,7 @@ import { z } from "zod";
 import type { APIRoute } from "astro";
 import type { Json } from "../../db/database.types";
 import { analyzeProject } from "../../lib/services/ai.service";
-import { listQuotations } from "../../lib/services/quotation.service";
+import { createQuotationService } from "../../lib/services/quotation.service";
 
 // Validation schema for the request body
 const createQuotationSchema = z.object({
@@ -143,6 +143,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 };
 
 export const GET: APIRoute = async ({ request, locals }) => {
+  const { listQuotations } = createQuotationService(locals.supabase);
   try {
     const { supabase, user } = locals;
 

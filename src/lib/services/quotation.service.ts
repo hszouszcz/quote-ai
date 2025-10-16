@@ -11,6 +11,10 @@ export class QuotationNotFoundError extends Error {
   }
 }
 
+export class QuotationDatabaseError extends Error {
+  /* */
+}
+
 export class QuotationService {
   constructor(private readonly supabase: SupabaseClient) {}
 
@@ -100,6 +104,87 @@ export class QuotationService {
       throw new Error("Failed to delete quotation");
     }
   }
+
+  async listQuotations(supabase: SupabaseClient, params: ListQuotationsParams): Promise<ListQuotationsResult> {
+    const { userId, page, limit, sort, filter } = params;
+    const offset = (page - 1) * limit;
+
+    // Build base query
+    let query = supabase
+      .from("quotations")
+      .select(
+        `
+      *,
+      platforms:quotation_platforms(platform_id),
+      tasks:quotation_tasks(*),
+      review:reviews(*)
+    `,
+        { count: "exact" }
+      )
+      .eq("user_id", userId)
+      .range(offset, offset + limit - 1);
+
+    // Add sorting
+    if (sort) {
+      const [field, order] = sort.split(":");
+      if (field && order) {
+        query = query.order(field, { ascending: order === "asc" });
+      }
+    } else {
+      // Default sort by creation date (newest first)
+      query = query.order("created_at", { ascending: false });
+    }
+
+    // Add filtering
+    if (filter) {
+      query = query.ilike("scope", `%${filter}%`);
+    }
+
+    // Execute query
+    const { data: quotations, error, count } = await query;
+
+    if (error) {
+      console.error("Error fetching quotations:", error);
+      throw new Error("Failed to fetch quotations");
+    }
+
+    // If no quotations, return empty array with pagination
+    if (!quotations || quotations.length === 0) {
+      return {
+        data: [],
+        pagination: {
+          page,
+          limit,
+          total: 0,
+          totalPages: 0,
+        },
+      };
+    }
+
+    // Map results to DTO
+    const quotationsDTO = (quotations as QuotationRecord[]).map(
+      (quotation): QuotationDTO => ({
+        ...quotation,
+        platforms: quotation.platforms?.map((p) => p.platform_id) || [],
+        tasks: quotation.tasks || [],
+        review: quotation.review?.[0] || null,
+      })
+    );
+
+    return {
+      data: quotationsDTO,
+      pagination: {
+        page,
+        limit,
+        total: count || 0,
+        totalPages: count ? Math.ceil(count / limit) : 0,
+      },
+    };
+  }
+}
+
+export function createQuotationService(supabase: SupabaseClient): QuotationService {
+  return new QuotationService(supabase);
 }
 
 export interface ListQuotationsParams {
@@ -157,84 +242,4 @@ interface QuotationRecord {
   platforms?: QuotationPlatform[];
   tasks?: QuotationTask[];
   review?: Review[];
-}
-
-export async function listQuotations(
-  supabase: SupabaseClient,
-  params: ListQuotationsParams
-): Promise<ListQuotationsResult> {
-  const { userId, page, limit, sort, filter } = params;
-  const offset = (page - 1) * limit;
-
-  // Build base query
-  let query = supabase
-    .from("quotations")
-    .select(
-      `
-      *,
-      platforms:quotation_platforms(platform_id),
-      tasks:quotation_tasks(*),
-      review:reviews(*)
-    `,
-      { count: "exact" }
-    )
-    .eq("user_id", userId)
-    .range(offset, offset + limit - 1);
-
-  // Add sorting
-  if (sort) {
-    const [field, order] = sort.split(":");
-    if (field && order) {
-      query = query.order(field, { ascending: order === "asc" });
-    }
-  } else {
-    // Default sort by creation date (newest first)
-    query = query.order("created_at", { ascending: false });
-  }
-
-  // Add filtering
-  if (filter) {
-    query = query.ilike("scope", `%${filter}%`);
-  }
-
-  // Execute query
-  const { data: quotations, error, count } = await query;
-
-  if (error) {
-    console.error("Error fetching quotations:", error);
-    throw new Error("Failed to fetch quotations");
-  }
-
-  // If no quotations, return empty array with pagination
-  if (!quotations || quotations.length === 0) {
-    return {
-      data: [],
-      pagination: {
-        page,
-        limit,
-        total: 0,
-        totalPages: 0,
-      },
-    };
-  }
-
-  // Map results to DTO
-  const quotationsDTO = (quotations as QuotationRecord[]).map(
-    (quotation): QuotationDTO => ({
-      ...quotation,
-      platforms: quotation.platforms?.map((p) => p.platform_id) || [],
-      tasks: quotation.tasks || [],
-      review: quotation.review?.[0] || null,
-    })
-  );
-
-  return {
-    data: quotationsDTO,
-    pagination: {
-      page,
-      limit,
-      total: count || 0,
-      totalPages: count ? Math.ceil(count / limit) : 0,
-    },
-  };
 }
