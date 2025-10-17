@@ -105,12 +105,12 @@ export class QuotationService {
     }
   }
 
-  async listQuotations(supabase: SupabaseClient, params: ListQuotationsParams): Promise<ListQuotationsResult> {
+  async listQuotations(params: ListQuotationsParams): Promise<ListQuotationsResult> {
     const { userId, page, limit, sort, filter } = params;
     const offset = (page - 1) * limit;
 
     // Build base query
-    let query = supabase
+    let query = this.supabase
       .from("quotations")
       .select(
         `

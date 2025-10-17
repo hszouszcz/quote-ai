@@ -145,7 +145,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 export const GET: APIRoute = async ({ request, locals }) => {
   const { listQuotations } = createQuotationService(locals.supabase);
   try {
-    const { supabase, user } = locals;
+    const { user } = locals;
 
     if (!user?.id) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
@@ -173,7 +173,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
     }
 
     // Pobieranie danych przy użyciu serwisu
-    const result = await listQuotations(supabase, {
+    const result = await listQuotations({
       userId: user.id,
       ...validatedParams.data,
     });
