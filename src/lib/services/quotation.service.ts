@@ -3,6 +3,7 @@ import type { UpdateQuotationInput } from "../schemas/quotation.schema";
 import type { QuotationDTO } from "../../types";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Json } from "../../db/database.types";
+import { DatabaseError, ValidationError } from "../errors";
 
 export class QuotationNotFoundError extends Error {
   constructor(message = "Quotation not found") {
@@ -19,6 +20,7 @@ export class QuotationService {
   constructor(private readonly supabase: SupabaseClient) {}
 
   private handleDatabaseError(error: PostgrestError): never {
+    // eslint-disable-next-line no-console
     console.error("Database error:", error);
 
     if (error.code === "23503") {
@@ -144,6 +146,7 @@ export class QuotationService {
     const { data: quotations, error, count } = await query;
 
     if (error) {
+      // eslint-disable-next-line no-console
       console.error("Error fetching quotations:", error);
       throw new Error("Failed to fetch quotations");
     }
@@ -181,9 +184,61 @@ export class QuotationService {
       },
     };
   }
+
+  async createQuotation(input: CreateQuotationInput): Promise<QuotationDTO> {
+    try {
+      // Validate input
+      if (!input.platforms.length) {
+        throw new ValidationError("At least one platform must be selected", "platforms");
+      }
+
+      if (!input.tasks.length) {
+        throw new ValidationError("At least one task must be provided", "tasks");
+      }
+
+      // Call the database function
+      const { data, error } = await this.supabase.rpc("create_quotation_with_relations", {
+        p_user_id: input.user_id,
+        p_estimation_type: input.estimation_type,
+        p_scope: input.scope,
+        p_man_days: input.man_days,
+        p_buffer: input.buffer,
+        p_dynamic_attributes: input.dynamic_attributes,
+        p_platforms: input.platforms,
+        p_tasks: input.tasks.map((task) => ({
+          description: task.description,
+          man_days: task.man_days,
+        })),
+      });
+
+      if (error) {
+        this.handleDatabaseError(error);
+      }
+
+      if (!data) {
+        throw new DatabaseError("Failed to create quotation - no data returned");
+      }
+
+      // Transform the response to match QuotationDTO
+      return {
+        ...data,
+        tasks: data.tasks || [],
+        platforms: data.platforms || [],
+        review: null,
+      } as QuotationDTO;
+    } catch (error) {
+      if (error instanceof ValidationError || error instanceof DatabaseError) {
+        throw error;
+      }
+
+      throw new DatabaseError("Failed to create quotation", "CREATE_QUOTATION_ERROR", { originalError: error });
+    }
+  }
 }
 
 export function createQuotationService(supabase: SupabaseClient): QuotationService {
+  // eslint-disable-next-line no-console
+  console.log("[QUOTATION_SERVICE] Creating service, supabase:", !!supabase, typeof supabase);
   return new QuotationService(supabase);
 }
 
@@ -242,4 +297,18 @@ interface QuotationRecord {
   platforms?: QuotationPlatform[];
   tasks?: QuotationTask[];
   review?: Review[];
+}
+
+interface CreateQuotationInput {
+  user_id: string;
+  estimation_type: "Fixed Price" | "Time & Material";
+  scope: string;
+  man_days: number;
+  buffer: number;
+  dynamic_attributes: Json;
+  platforms: string[];
+  tasks: {
+    description: string;
+    man_days: number;
+  }[];
 }

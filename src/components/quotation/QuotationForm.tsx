@@ -97,8 +97,8 @@ export function QuotationForm() {
 
       // Handle successful submission
       const data = await response.json();
-      window.location.href = `/quotations/${data.id}`;
-    } catch (_error) {
+      window.location.href = `/quotations/${data.data.id}`;
+    } catch {
       setFormState((prev) => ({
         ...prev,
         errors: {

@@ -1,0 +1,7 @@
+ TODOS:
+    New:
+    - Refactor to use QuotationService in API routes instead of direct Supabase queries @done
+    - Implement a centralized error handling mechanism for API routes
+        - Create a middleware function to handle errors 
+        - Create a middleware to prevent any DB operations on resources not owned by the authenticated user
+    - use ORM for db requests

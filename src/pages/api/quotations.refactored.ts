@@ -1,12 +1,11 @@
 import type { APIRoute } from "astro";
 import { z } from "zod";
-import type { Json } from "../../db/database.types";
-import { withErrorHandling, AuthorizationError } from "../../lib/errors";
-import { validateRequestBody, validateQueryParams, commonSchemas } from "../../lib/validation";
-import { createQuotationService } from "../../lib/services/quotation.service";
-import { analyzeProject } from "../../lib/services/ai.service";
+import { withErrorHandling, AuthorizationError, ValidationError } from "@/lib/errors";
+import { validateRequestBody, validateQueryParams, commonSchemas } from "@/lib/validation";
+import { createQuotationService } from "@/lib/services/quotation.service";
+import { analyzeProject } from "@/lib/services/ai.service";
 
-// Validation schema for the request body
+// Validation schemas
 const createQuotationSchema = z.object({
   estimation_type: z.enum(["Fixed Price", "Time & Material"]),
   scope: z.string().max(10000, "Scope description cannot exceed 10000 characters"),
@@ -14,18 +13,15 @@ const createQuotationSchema = z.object({
   dynamic_attributes: z.union([z.record(z.unknown()), z.null()]).optional(),
 });
 
-// Query params schema
 const quotationQuerySchema = commonSchemas.pagination.extend({
   filter: z.string().optional(),
 });
 
-// Apply buffer to total man_days (minimum 30%)
-const applyBuffer = (totalManDays: number): number => {
-  return Math.ceil(totalManDays * 0.3); // 30% buffer
-};
-
 export const prerender = false;
 
+/**
+ * Create new quotation
+ */
 export const POST: APIRoute = withErrorHandling(async ({ request, locals }) => {
   const { supabase, user } = locals;
 
@@ -42,25 +38,23 @@ export const POST: APIRoute = withErrorHandling(async ({ request, locals }) => {
   const quotationService = createQuotationService(supabase);
 
   // Analyze project with AI
-  const aiAnalysis = await analyzeProject(scope, platforms, estimation_type, dynamic_attributes as Json);
+  const analysisResult = await analyzeProject(scope, platforms, estimation_type);
 
-  // Calculate total man_days and buffer
-  const totalManDays = aiAnalysis.tasks.reduce((sum, task) => sum + (task.man_days || 0), 0);
-  const buffer = applyBuffer(totalManDays);
+  // Apply buffer to total man_days (minimum 30%)
+  const applyBuffer = (totalManDays: number): number => Math.ceil(totalManDays * 0.3);
+  const totalBuffer = applyBuffer(analysisResult.total_man_days);
 
   // Create quotation
   const quotation = await quotationService.createQuotation({
     user_id: user.id,
     estimation_type,
     scope,
-    man_days: totalManDays,
-    buffer: buffer,
-    dynamic_attributes: (dynamic_attributes || null) as Json,
     platforms,
-    tasks: aiAnalysis.tasks.map((task) => ({
-      description: task.description,
-      man_days: task.man_days || 0,
-    })),
+    project_analysis: analysisResult.project_analysis,
+    total_man_days: analysisResult.total_man_days,
+    buffer_man_days: totalBuffer,
+    total_with_buffer: analysisResult.total_man_days + totalBuffer,
+    dynamic_attributes: dynamic_attributes as Record<string, unknown> | null,
   });
 
   return new Response(
@@ -75,6 +69,9 @@ export const POST: APIRoute = withErrorHandling(async ({ request, locals }) => {
   );
 });
 
+/**
+ * Get quotations list
+ */
 export const GET: APIRoute = withErrorHandling(async ({ request, locals }) => {
   const { supabase, user } = locals;
 
@@ -85,25 +82,34 @@ export const GET: APIRoute = withErrorHandling(async ({ request, locals }) => {
 
   // Validate query parameters
   const url = new URL(request.url);
-  const validatedParams = validateQueryParams(url, quotationQuerySchema);
+  const { page, limit, sort, order, filter } = validateQueryParams(url, quotationQuerySchema);
 
   // Create quotation service
   const quotationService = createQuotationService(supabase);
 
   // Get quotations
-  const result = await quotationService.listQuotations({
-    userId: user.id,
-    page: validatedParams.page ?? 1,
-    limit: validatedParams.limit ?? 10,
-    sort: validatedParams.sort,
-    filter: validatedParams.filter,
-  });
+  const { quotations, totalCount } = await quotationService.getQuotationsByUserId(
+    user.id,
+    { page, limit, sort, order, filter }
+  );
+
+  // Calculate pagination info
+  const totalPages = Math.ceil(totalCount / limit);
+  const hasNext = page < totalPages;
+  const hasPrev = page > 1;
 
   return new Response(
     JSON.stringify({
       success: true,
-      data: result.data,
-      pagination: result.pagination,
+      data: quotations,
+      pagination: {
+        page,
+        limit,
+        totalCount,
+        totalPages,
+        hasNext,
+        hasPrev,
+      },
     }),
     {
       status: 200,
