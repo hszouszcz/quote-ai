@@ -1,4 +1,5 @@
 import type { Json } from "../../db/database.types";
+import { ProjectAnalysisService } from "./langchain/projectAnalysis.service";
 import { OpenRouterService } from "./openrouter/service";
 import type { OpenRouterConfig, ResponsePayload, MistralResponse } from "./openrouter/types";
 
@@ -139,6 +140,12 @@ Analyze this project and provide a detailed estimation in the required JSON form
     if (!result.tasks || !Array.isArray(result.tasks)) {
       throw new Error("Invalid response format: missing tasks array");
     }
+
+    const langchainService = new ProjectAnalysisService();
+    await langchainService.analyzeProject(`Project Details:
+- Scope: ${scope}
+- Platforms: ${platforms.join(", ")}
+`);
 
     return result;
   } catch (error) {
