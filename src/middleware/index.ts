@@ -1,6 +1,7 @@
-import { defineMiddleware } from "astro:middleware";
+import { defineMiddleware, sequence } from "astro:middleware";
 import { createSupabaseServerInstance } from "@/lib/supabase";
 import { errorReporter } from "@/lib/errors";
+import { errorHandlingMiddleware } from "@/lib/middleware/errorHandling";
 
 // Ścieżki publiczne - endpointy API Auth i strony Astro renderowane po stronie serwera
 const PUBLIC_PATHS = [
@@ -15,7 +16,7 @@ const PUBLIC_PATHS = [
   "/api/auth/recover-password",
 ];
 
-export const onRequest = defineMiddleware(async ({ locals, cookies, url, request, redirect }, next) => {
+export const main = defineMiddleware(async ({ locals, cookies, url, request, redirect }, next) => {
   try {
     const supabase = createSupabaseServerInstance({
       cookies,
@@ -65,3 +66,7 @@ export const onRequest = defineMiddleware(async ({ locals, cookies, url, request
     return redirect("/auth/login");
   }
 });
+
+const onError = defineMiddleware(errorHandlingMiddleware);
+
+export const onRequest = sequence(onError, main);
