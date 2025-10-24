@@ -1,0 +1,31 @@
+import { z } from "zod";
+
+/**
+ * Schema for AI project analysis response
+ * Used to validate and type-check responses from LLM
+ */
+export const ProjectAnalysisSchema = z.object({
+  goal: z.string().min(1, "Goal cannot be empty").describe("Main project goal or purpose"),
+
+  target_audience: z
+    .array(z.string().min(1))
+    .min(1, "Must have at least one target audience")
+    .describe("Target users or audience groups"),
+
+  type: z
+    .string()
+    .min(1, "Type cannot be empty")
+    .describe("Product type (SaaS, mobile app, marketplace, internal tool, etc.)"),
+
+  key_features: z.record(z.string(), z.array(z.string().min(1))).describe("Key features grouped by category"),
+
+  non_functional: z.array(z.string().min(1)).describe("Non-functional requirements, integrations, performance needs"),
+
+  open_questions: z.array(z.string().min(1)).describe("Known constraints or open questions"),
+});
+
+/**
+ * TypeScript type inferred from Zod schema
+ * Use this for type annotations throughout the codebase
+ */
+export type ProjectAnalysis = z.infer<typeof ProjectAnalysisSchema>;

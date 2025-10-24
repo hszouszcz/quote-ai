@@ -4,30 +4,11 @@ import { ChatOpenAI } from "@langchain/openai";
 import { errorReporter } from "@/lib/errors";
 import { z } from "zod";
 import { createProjectAnalysisPrompt, PROJECT_ANALYSIS_SYSTEM_PROMPT } from "./prompts";
+import { ProjectAnalysisSchema, type ProjectAnalysis } from "@/lib/schemas";
 
 const OPENROUTER_API_KEY = import.meta.env.OPENROUTER_API_KEY;
 const OPENROUTER_BASE_URL = import.meta.env.OPENROUTER_BASE_URL;
 const PROJECT_ANALYSIS_MODEL = import.meta.env.PROJECT_ANALYSIS_MODEL;
-
-// Define the Zod schema for validation and type safety
-const ProjectAnalysisSchema = z.object({
-  goal: z.string().min(1, "Goal cannot be empty").describe("Main project goal or purpose"),
-
-  target_audience: z
-    .array(z.string().min(1))
-    .min(1, "Must have at least one target audience")
-    .describe("Target users or audience groups"),
-  type: z
-    .string()
-    .min(1, "Type cannot be empty")
-    .describe("Product type (SaaS, mobile app, marketplace, internal tool, etc.)"),
-  key_features: z.record(z.string(), z.array(z.string().min(1))).describe("Key features grouped by category"),
-  non_functional: z.array(z.string().min(1)).describe("Non-functional requirements, integrations, performance needs"),
-  open_questions: z.array(z.string().min(1)).describe("Known constraints or open questions"),
-});
-
-// TypeScript type inferred from Zod schema
-type ProjectAnalysis = z.infer<typeof ProjectAnalysisSchema>;
 
 export class ProjectAnalysisService {
   private agent: ChatOpenAI;
@@ -82,7 +63,7 @@ export class ProjectAnalysisService {
     } catch (error) {
       errorReporter.reportUnexpectedError(error, {
         context: "ProjectAnalysisService.analyzeProject",
-        description,
+        description: `${JSON.parse(description)}`,
       });
       throw error;
     }
