@@ -1,4 +1,5 @@
 import type { Json } from "../../db/database.types";
+import { ProjectModulesService } from "./langchain/modulesExtraction.service";
 import { ProjectAnalysisService } from "./langchain/projectAnalysis.service";
 import { OpenRouterService } from "./openrouter/service";
 import type { OpenRouterConfig, ResponsePayload, MistralResponse } from "./openrouter/types";
@@ -142,10 +143,13 @@ Analyze this project and provide a detailed estimation in the required JSON form
     }
 
     const langchainService = new ProjectAnalysisService();
-    await langchainService.analyzeProject(`Project Details:
-- Scope: ${scope}
-- Platforms: ${platforms.join(", ")}
-`);
+    const projectAnalysisResponse = await langchainService.analyzeProject(`Project Details:
+    - Scope: ${scope}
+    - Platforms: ${platforms.join(", ")}
+    `);
+
+    const moduleBreakDownService = new ProjectModulesService();
+    await moduleBreakDownService.getProjectModules(projectAnalysisResponse);
 
     return result;
   } catch (error) {

@@ -3,22 +3,23 @@ import { ChatOpenAI } from "@langchain/openai";
 
 import { errorReporter } from "@/lib/errors";
 import { z } from "zod";
-import { createProjectAnalysisPrompt, PROJECT_ANALYSIS_SYSTEM_PROMPT } from "./prompts";
-import { ProjectAnalysisSchema, type ProjectAnalysis } from "@/lib/schemas";
+
+import { createProjectModulesPrompt, PROJECT_MODULES_SYSTEM_PROMPT } from "./prompts";
+import { ModulesBreakdownSchema, type ModulesBreakdown, type ProjectAnalysis } from "@/lib/schemas";
 
 const OPENROUTER_API_KEY = import.meta.env.OPENROUTER_API_KEY;
 const OPENROUTER_BASE_URL = import.meta.env.OPENROUTER_BASE_URL;
-const PROJECT_ANALYSIS_MODEL = import.meta.env.PROJECT_ANALYSIS_MODEL;
+const MODULE_BREAKDOWN_MODEL = import.meta.env.PROJECT_ANALYSIS_MODEL;
 
-export class ProjectAnalysisService {
+export class ProjectModulesService {
   private agent: ChatOpenAI;
 
   constructor() {
     // Configure ChatOpenAI to use OpenRouter
     this.agent = new ChatOpenAI({
-      model: PROJECT_ANALYSIS_MODEL,
+      model: MODULE_BREAKDOWN_MODEL,
       apiKey: OPENROUTER_API_KEY,
-      temperature: 0.5,
+      temperature: 0.6,
       maxTokens: 4000,
       configuration: {
         baseURL: OPENROUTER_BASE_URL,
@@ -30,45 +31,41 @@ export class ProjectAnalysisService {
     });
   }
 
-  analyzeProject = async (description: string): Promise<ProjectAnalysis> => {
+  getProjectModules = async (projectSummary: ProjectAnalysis): Promise<ModulesBreakdown> => {
     try {
       const response = await this.agent.invoke(
-        [new SystemMessage(PROJECT_ANALYSIS_SYSTEM_PROMPT), new HumanMessage(createProjectAnalysisPrompt(description))],
+        [
+          new SystemMessage(PROJECT_MODULES_SYSTEM_PROMPT),
+          new HumanMessage(createProjectModulesPrompt(JSON.stringify(projectSummary))),
+        ],
         {
           response_format: { type: "json_object" },
         }
       );
+      const responseContent = response.content as string;
 
       // Parse and validate the JSON response using Zod
       try {
-        // Extract content from the AI message
-        const content = response.content as string;
-
         // First parse as JSON
-        const rawParsed = JSON.parse(content);
+        const rawParsed = JSON.parse(responseContent);
 
         // Then validate and transform using Zod schema
-        // This will throw a ZodError if validation fails with detailed information
-        const validatedResponse = ProjectAnalysisSchema.parse(rawParsed);
-        console.log("Validated AI Response:", validatedResponse);
+        const validatedResponse = ModulesBreakdownSchema.parse(rawParsed);
+        console.log("Validated Modules Breakdown Response:", validatedResponse);
         return validatedResponse;
       } catch (parseError) {
         if (parseError instanceof z.ZodError) {
           // Detailed validation errors from Zod
           const errorMessages = parseError.errors.map((err) => `${err.path.join(".")}: ${err.message}`).join("; ");
-          throw new Error(`ProjectAnalysisService.analyzeProject AI response validation failed: ${errorMessages}`);
+          throw new Error(`ProjectModulesService.getProjectModules AI response validation failed: ${errorMessages}`);
         } else {
           // JSON parsing error or other error
-          throw new Error(`ProjectAnalysisService.analyzeProject Failed to parse AI response as JSON: ${parseError}`);
+          throw new Error(`ProjectModulesService.getProjectModules Failed to parse AI response as JSON: ${parseError}`);
         }
       }
     } catch (error) {
-      console.log("Error during project analysis:", error);
-      errorReporter.reportUnexpectedError(error, {
-        context: "ProjectAnalysisService.analyzeProject",
-        description: `${JSON.parse(description)}`,
-      });
-      throw error;
+      errorReporter.reportUnexpectedError(error);
+      throw new Error("Failed to get project modules");
     }
   };
 }

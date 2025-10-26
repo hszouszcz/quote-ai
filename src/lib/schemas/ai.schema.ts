@@ -29,3 +29,26 @@ export const ProjectAnalysisSchema = z.object({
  * Use this for type annotations throughout the codebase
  */
 export type ProjectAnalysis = z.infer<typeof ProjectAnalysisSchema>;
+/**
+ * Schema for AI project analysis response
+ * Used to validate and type-check responses from LLM
+ */
+export const ModulesBreakdownSchema = z
+  .object({
+    modules: z.array(
+      z.object({
+        name: z.string().min(1).describe("Name of the module"),
+        purpose: z.string().min(1).describe("Purpose of the module"),
+        features: z.array(z.string().min(1)).describe("Key features of the module"),
+        dependencies: z.array(z.string().min(1)).describe("Dependencies on other modules or systems"),
+        teams: z.array(z.string().min(1)).describe("Teams responsible for this module"),
+      })
+    ),
+  })
+  .describe("List of identified modules in the project");
+
+/**
+ * TypeScript type inferred from Zod schema
+ * Use this for type annotations throughout the codebase
+ */
+export type ModulesBreakdown = z.infer<typeof ModulesBreakdownSchema>;
