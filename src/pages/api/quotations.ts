@@ -42,7 +42,7 @@ export const POST: APIRoute = withErrorHandling(async ({ request, locals }) => {
   const quotationService = createQuotationService(supabase);
 
   // Analyze project with AI
-  const aiAnalysis = await analyzeProject(scope, platforms, estimation_type, dynamic_attributes as Json);
+  const aiAnalysis = await analyzeProject(scope, platforms, estimation_type, dynamic_attributes as Json, user.id);
 
   // Calculate total man_days and buffer
   const totalManDays = aiAnalysis.tasks.reduce((sum, task) => sum + (task.man_days || 0), 0);

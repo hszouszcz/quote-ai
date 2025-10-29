@@ -52,3 +52,9 @@ export const ModulesBreakdownSchema = z
  * Use this for type annotations throughout the codebase
  */
 export type ModulesBreakdown = z.infer<typeof ModulesBreakdownSchema>;
+
+export const DiscoveryInitialDataSchema = z.object({
+  initialDescription: z.string().min(1).max(10000).describe("Initial project description provided by the user"),
+});
+
+export type DiscoveryInitialData = z.infer<typeof DiscoveryInitialDataSchema>;

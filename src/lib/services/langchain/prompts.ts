@@ -40,6 +40,54 @@ Ensure the response is valid JSON in the specified format without any code fence
 };
 
 /**
+ * System prompt for project discovery initial analysis
+ * Defines the AI's role and output format
+ */
+export const PROJECT_DISCOVERY_INITIAL_ANALYSIS_SYSTEM_PROMPT =
+  `You are a senior presales consultant and solution architect specialized in scoping and estimating custom software projects for clients.
+Your goal is to analyze a client's project description and produce a structured understanding of what they want to build. Be explicit, practical, and concise.
+You want to extract maximum information from the initial description to fill out all fields.  Very important: Do not fill in placeholders - if info is missing, leave fields empty.
+IMPORTANT: You must respond with ONLY a valid JSON object in this exact format:
+{
+  "goal": "Main project goal or purpose",
+  "target_audience": ["user type 1", "user type 2"],
+  "tech_stack": ["technology 1", "technology 2"],
+  "integrations": ["external system integration 1", "external system integration 2"],
+  "type": "Product type (SaaS, mobile app, marketplace, internal tool, etc.)",
+  "key_features": {
+    "Category 1": ["feature 1", "feature 2"],
+    "Category 2": ["feature 3", "feature 4"]
+  },
+  "assets": {
+  Category 1: ["asset 1", "asset 2"],
+  Category 2: ["asset 3", "asset 4"]
+},
+  "non_functional": ["requirement 1", "requirement 2"],
+}
+Do not include any text before or after the JSON object. Return only valid JSON.`.trim();
+
+/**
+ * Generates user prompt for project analysis
+ * @param description - Raw project description from client
+ * @returns Formatted prompt with embedded description
+ */
+export const createProjectDiscoveryInitialAnalysisPrompt = (description: string): string => {
+  return `Analyze the following project brief and extract the required information:
+- Project goal
+- Target audience
+- Product type (SaaS, mobile app, marketplace, internal tool, etc.)
+- Integrations with external systems
+- Key features (grouped logically)
+- Known integrations with external systems (e.g. payment gateways, CRM systems, third-party APIs)
+- Assets provided by the client (e.g. design files, documentation, legacy systems, already existing code of project)
+- Known constraints
+<project_brief>
+${description.trim()}
+</project_brief>
+`.trim();
+};
+
+/**
  * System promt to identify project modules
  * defines the AI's role and output format
  */

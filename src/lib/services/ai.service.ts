@@ -1,4 +1,6 @@
+import { supabaseClient } from "@/db/supabase.client";
 import type { Json } from "../../db/database.types";
+import { DiscoveryService } from "./langchain/discovery.service";
 import { ProjectModulesService } from "./langchain/modulesExtraction.service";
 import { ProjectAnalysisService } from "./langchain/projectAnalysis.service";
 import { OpenRouterService } from "./openrouter/service";
@@ -84,7 +86,8 @@ export async function analyzeProject(
   scope: string,
   platforms: string[],
   estimationType: string,
-  dynamicAttributes: Json | null
+  dynamicAttributes: Json | null,
+  userId: string
 ): Promise<AIProjectAnalysis> {
   const systemPrompt = `You are an expert software project estimator. Your task is to analyze the project scope and provide a JSON response with tasks and estimates.
 Follow these guidelines strictly:
@@ -142,14 +145,29 @@ Analyze this project and provide a detailed estimation in the required JSON form
       throw new Error("Invalid response format: missing tasks array");
     }
 
-    const langchainService = new ProjectAnalysisService();
-    const projectAnalysisResponse = await langchainService.analyzeProject(`Project Details:
+    const langchainService = new DiscoveryService(supabaseClient, userId);
+    const discoverySession = await langchainService.startDiscovery({
+      initialDescription: `Project Details:
     - Scope: ${scope}
     - Platforms: ${platforms.join(", ")}
-    `);
+     `,
+    });
 
-    const moduleBreakDownService = new ProjectModulesService();
-    await moduleBreakDownService.getProjectModules(projectAnalysisResponse);
+    langchainService.initialAnalysis(
+      discoverySession.id,
+      `Project Details:
+    - Scope: ${scope}
+    - Platforms: ${platforms.join(", ")}
+     `
+    );
+
+    // const projectAnalysisResponse = await langchainService.analyzeProject(`Project Details:
+    // - Scope: ${scope}
+    // - Platforms: ${platforms.join(", ")}
+    // `);
+
+    // const moduleBreakDownService = new ProjectModulesService();
+    // await moduleBreakDownService.getProjectModules(projectAnalysisResponse);
 
     return result;
   } catch (error) {
