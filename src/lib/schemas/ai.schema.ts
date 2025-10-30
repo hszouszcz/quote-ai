@@ -58,3 +58,38 @@ export const DiscoveryInitialDataSchema = z.object({
 });
 
 export type DiscoveryInitialData = z.infer<typeof DiscoveryInitialDataSchema>;
+
+export const InitialProjectAnalysisResponseSchema = z.object({
+  goal: z.string().min(1).describe("Main project goal or purpose"),
+
+  target_audience: z
+    .array(z.string().min(1))
+    .min(1, "Must have at least one target audience")
+    .describe("Target users or audience groups"),
+  tech_stack: z.array(z.string().min(1)).describe("Recommended technology stack for the project"),
+  integrations: z.array(z.string().min(1)).describe("Suggested third-party integrations"),
+  type: z
+    .string()
+    .min(1, "Type cannot be empty")
+    .describe("Product type (SaaS, mobile app, marketplace, internal tool, etc.)"),
+  key_features: z.record(z.string(), z.array(z.string().min(1))).describe("Key features grouped by category"),
+  assets: z.record(z.string(), z.array(z.string().min(1))).describe("Required assets like designs, content, media"),
+  non_functional: z.array(z.string().min(1)).describe("Non-functional requirements, integrations, performance needs"),
+});
+
+export type InitialProjectAnalysisResponse = z.infer<typeof InitialProjectAnalysisResponseSchema>;
+
+export const QuestionsRoundResponseSchema = z.object({
+  questions: z
+    .array(
+      z.object({
+        question: z.string().min(1).describe("A single discovery question"),
+        context: z.string().min(1).describe("Context or background information for the question"),
+        category: z.string().min(1).describe("Category of the question (e.g., Technical, Business, UX)"),
+        priority: z.number().min(1).max(5).describe("Priority of the question from 1 (low) to 5 (critical)"),
+      })
+    )
+    .describe("List of questions for the round"),
+});
+
+export type QuestionsRoundResponse = z.infer<typeof QuestionsRoundResponseSchema>;

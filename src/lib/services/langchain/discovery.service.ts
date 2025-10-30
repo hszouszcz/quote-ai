@@ -1,10 +1,19 @@
-import { DiscoveryInitialDataSchema, type DiscoveryInitialData } from "@/lib/schemas";
+import {
+  DiscoveryInitialDataSchema,
+  InitialProjectAnalysisResponseSchema,
+  type DiscoveryInitialData,
+  type InitialProjectAnalysisResponse,
+} from "@/lib/schemas";
 import type { SupabaseClient } from "@/db/supabase.client";
 import type { Database } from "@/types/database.types";
 import z from "zod";
 import { ChatOpenAI } from "@langchain/openai";
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
-import { PROJECT_DISCOVERY_INITIAL_ANALYSIS_SYSTEM_PROMPT } from "./prompts";
+import {
+  buildInitialQuestionPrompt,
+  DISCOVERY__GENERATE_QUESTIONS_SYSTEM_PROMPT,
+  PROJECT_DISCOVERY_INITIAL_ANALYSIS_SYSTEM_PROMPT,
+} from "./prompts";
 
 const OPENROUTER_API_KEY = import.meta.env.OPENROUTER_API_KEY;
 const OPENROUTER_BASE_URL = import.meta.env.OPENROUTER_BASE_URL;
@@ -82,13 +91,26 @@ export class DiscoveryService {
     if (!description || !sessionId) {
       throw new Error("DiscoveryService.initialAnalysis Invalid input");
     }
+    try {
+      const response = await this.agent.invoke(
+        [new SystemMessage(PROJECT_DISCOVERY_INITIAL_ANALYSIS_SYSTEM_PROMPT), new HumanMessage(description)],
+        { response_format: { type: "json_object" } }
+      );
 
-    const response = await this.agent.invoke(
-      [new SystemMessage(PROJECT_DISCOVERY_INITIAL_ANALYSIS_SYSTEM_PROMPT), new HumanMessage(description)],
-      { response_format: { type: "json_object" } }
-    );
+      console.log("Initial Analysis Response:", response.content.toString());
 
-    console.log("Initial Analysis Response:", response.content.toString());
+      const rawJson = JSON.parse(response.content.toString());
+      const validatedData = InitialProjectAnalysisResponseSchema.parse(rawJson);
+
+      return validatedData;
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        const errorMessages = error.errors.map((err) => `${err.path.join(".")}: ${err.message}`).join("; ");
+        throw new Error(`DiscoveryService.initialAnalysis Response validation failed: ${errorMessages}`);
+      } else {
+        throw new Error(`DiscoveryService.initialAnalysis Unexpected error: ${error}`);
+      }
+    }
   }
 
   // TODO: Implement processAnswer
@@ -133,5 +155,24 @@ export class DiscoveryService {
     }
 
     return data;
+  }
+
+  async getQuestionsForRound(sessionId: string, round: number, description: string): Promise<RoundOutput> {
+    try {
+      const initialAnalysisResponse = await this.initialAnalysis(sessionId, description);
+      const result = await this.agent.invoke(
+        [
+          new SystemMessage(DISCOVERY__GENERATE_QUESTIONS_SYSTEM_PROMPT),
+          new HumanMessage(buildInitialQuestionPrompt(description, initialAnalysisResponse.toString())),
+        ],
+        { response_format: { type: "json_object" } }
+      );
+
+      const rawJson = JSON.parse(result.content.toString());
+      const validatedData = QuestionsRoundResponseSchema.parse(rawJson);
+      return validatedData;
+    } catch (error) {
+      throw new Error(`DiscoveryService.getQuestionsForRound Failed: ${error}`);
+    }
   }
 }

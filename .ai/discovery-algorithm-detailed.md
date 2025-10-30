@@ -175,12 +175,16 @@ function buildDiscoverySystemPrompt(): string {
 ### User Prompt (Phase 1 - Initial Questions)
 
 ```typescript
-function buildInitialQuestionPrompt(description: string): string {
+function buildInitialQuestionPrompt(description: string, initialAnaltsisResult: string): string {
   return `The client provided this initial project description:
 
 <project_description>
 ${description.trim()}
 </project_description>
+
+<initial_analysis_result>
+${initialAnalysisResult.trin()}
+</initial_analysis_result>
 
 TASK:
 Generate exactly 5 strategic questions that will extract the most critical missing information for accurate project estimation.
@@ -188,8 +192,9 @@ Generate exactly 5 strategic questions that will extract the most critical missi
 ANALYSIS GUIDELINES:
 1. What is clearly stated in the description?
 2. What is ambiguous or unclear?
-3. What critical information is completely missing?
-4. Which missing information has highest impact on estimation?
+3. What is already discovered in initial analysis? Are these information correct compared to description?
+4. What critical information is completely missing?
+5. Which missing information has highest impact on estimation?
 
 QUESTION PRIORITIES:
 - Priority 5: Critical for estimation (blocks progress if missing)
