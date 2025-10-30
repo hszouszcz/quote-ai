@@ -1,6 +1,7 @@
 import {
   DiscoveryInitialDataSchema,
   InitialProjectAnalysisResponseSchema,
+  QuestionsRoundResponseSchema,
   type DiscoveryInitialData,
   type InitialProjectAnalysisResponse,
 } from "@/lib/schemas";
@@ -170,9 +171,17 @@ export class DiscoveryService {
 
       const rawJson = JSON.parse(result.content.toString());
       const validatedData = QuestionsRoundResponseSchema.parse(rawJson);
+
+      console.log("Questions for Round Response:", validatedData);
+
       return validatedData;
     } catch (error) {
-      throw new Error(`DiscoveryService.getQuestionsForRound Failed: ${error}`);
+      if (error instanceof z.ZodError) {
+        const errorMessages = error.errors.map((err) => `${err.path.join(".")}: ${err.message}`).join("; ");
+        throw new Error(`DiscoveryService.getQuestionsForRound Response validation failed: ${errorMessages}`);
+      } else {
+        throw new Error(`DiscoveryService.getQuestionsForRound Unexpected error: ${error}`);
+      }
     }
   }
 }
