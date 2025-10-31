@@ -3,7 +3,6 @@ import {
   InitialProjectAnalysisResponseSchema,
   QuestionsRoundResponseSchema,
   type DiscoveryInitialData,
-  type InitialProjectAnalysisResponse,
 } from "@/lib/schemas";
 import type { SupabaseClient } from "@/db/supabase.client";
 import type { Database } from "@/types/database.types";
@@ -24,6 +23,10 @@ const PROJECT_ANALYSIS_MODEL = import.meta.env.PROJECT_ANALYSIS_MODEL;
 type DiscoverySessionRow = Database["public"]["Tables"]["discovery_sessions"]["Row"];
 type DiscoverySessionInsert = Database["public"]["Tables"]["discovery_sessions"]["Insert"];
 type DiscoverySessionUpdate = Database["public"]["Tables"]["discovery_sessions"]["Update"];
+
+type DiscoveryQuestionsForRoundRow = Database["public"]["Tables"]["discovery_questions"]["Row"];
+type DiscoveryQuestionsForRoundInsert = Database["public"]["Tables"]["discovery_questions"]["Insert"];
+type DiscoveryQuestionsForRoundUpdate = Database["public"]["Tables"]["discovery_questions"]["Update"];
 
 export class DiscoveryService {
   // 👉 2. Constructor używa typowanego klienta z naszego projektu
@@ -158,7 +161,11 @@ export class DiscoveryService {
     return data;
   }
 
-  async getQuestionsForRound(sessionId: string, round: number, description: string): Promise<RoundOutput> {
+  async getQuestionsForRound(
+    sessionId: string,
+    round: number,
+    description: string
+  ): Promise<DiscoveryQuestionsForRoundRow[]> {
     try {
       const initialAnalysisResponse = await this.initialAnalysis(sessionId, description);
       const result = await this.agent.invoke(
@@ -172,9 +179,20 @@ export class DiscoveryService {
       const rawJson = JSON.parse(result.content.toString());
       const validatedData = QuestionsRoundResponseSchema.parse(rawJson);
 
+      const insertData: DiscoveryQuestionsForRoundInsert[] = validatedData.questions.map((q) => ({
+        session_id: sessionId,
+        round_number: round,
+        question_text: q.question,
+        context: q.context,
+        category: q.category,
+        priority: q.priority,
+      }));
+
+      const questionsFromDB = await this.supabase.from("discovery_questions").insert(insertData).select();
+
       console.log("Questions for Round Response:", validatedData);
 
-      return validatedData;
+      return questionsFromDB.data || [];
     } catch (error) {
       if (error instanceof z.ZodError) {
         const errorMessages = error.errors.map((err) => `${err.path.join(".")}: ${err.message}`).join("; ");
@@ -182,6 +200,23 @@ export class DiscoveryService {
       } else {
         throw new Error(`DiscoveryService.getQuestionsForRound Unexpected error: ${error}`);
       }
+    }
+  }
+
+  async saveAnswerToQuestion(sessionId: string, questionId: string, answer: string): Promise<void> {
+    const updateData: DiscoveryQuestionsForRoundUpdate = {
+      answer,
+    };
+
+    const { error } = await this.supabase
+      .from("discovery_questions")
+      .update(updateData)
+      .eq("id", questionId)
+      .eq("session_id", sessionId)
+      .single();
+
+    if (error) {
+      throw new Error(`DiscoveryService.saveAnswerToQuestion Failed: ${error.message}`);
     }
   }
 }
