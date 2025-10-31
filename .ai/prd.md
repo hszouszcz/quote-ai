@@ -1,24 +1,32 @@
 # Dokument wymagań produktu (PRD) - AI Wycena
 
 ## 1. Przegląd produktu
-Projekt "AI Wycena" to system automatyzujący generowanie wycen projektów IT przy użyciu modelu AI. Aplikacja umożliwia użytkownikom wprowadzenie szczegółowego opisu projektu (do 10000 znaków), wybór platform (np. frontend, backend, iOS, Android) przy pomocy checkboxów oraz określenie typu wyceny (Fixed Price lub Time & Material). System automatycznie generuje scope projektu wraz z podziałem zadań, wyliczeniem man-days bazującym na stałych 5-6 godzinach pracy dziennie oraz dodanym buforem minimum 30%. Dodatkowo, aplikacja oferuje mechanizmy autoryzacji oparte na OAuth, ocenę wygenerowanej wyceny oraz zapewnia standardowe zabezpieczenia danych.
+Projekt "AI Wycena" to system automatyzujący generowanie wycen projektów IT przy użyciu modelu AI. Aplikacja umożliwia użytkownikom przejście przez iteracyjny, wieloetapowy proces zbierania informacji o projekcie, w którym użytkownik odpowiada na dynamicznie generowane pytania dotyczące zakresu, technologii, wymagań i ograniczeń projektu. Na podstawie tych odpowiedzi system generuje szczegółowy scope projektu, wylicza man-days bazując na stałych 5-6 godzinach pracy dziennie oraz dodaje bufor minimum 30%. Proces ten jest wspierany przez mechanizmy autoryzacji oparte na OAuth oraz zapewnia standardowe zabezpieczenia danych.
 
 ## 2. Problem użytkownika
 Softwarehouse i inne firmy technologiczne borykają się z problemem czasochłonnych i kosztownych wycen projektów IT, które wymagają angażowania deweloperów, opóźniając tym samym proces odpowiedzi do klienta. Brak automatyzacji w tym obszarze prowadzi do nieefektywnego wykorzystania zasobów oraz ryzyka błędnych wyliczeń, co może negatywnie wpływać na satysfakcję klienta i konkurencyjność firmy.
 
 ## 3. Wymagania funkcjonalne
-- Formularz umożliwiający wprowadzenie opisu projektu do 10000 znaków z zaawansowaną walidacją tekstu.
-- Checkboxy umożliwiające wybór platform (np. frontend, backend, iOS, Android) oraz typu wyceny (Fixed Price lub Time & Material), przy czym wybór przynajmniej jednej platformy jest obowiązkowy.
-- Automatyczne generowanie szczegółowego scope'u projektu, z wyliczeniem man-days opartym na stałych 5-6 godzinach pracy dziennie oraz dodanym buforem minimum 30% (z możliwością zwiększenia dla bardziej złożonych projektów).
-- Mechanizm autoryzacji użytkowników oparty na OAuth (bez opcji logowania społecznościowego).
-- Funkcjonalność umożliwiająca ocenę wygenerowanej wyceny poprzez system ocen (skala ocen oraz opcjonalny komentarz).
-- Zastosowanie standardowych zabezpieczeń danych, zgodnych z metodami ochrony danych wrażliwych.
-- Kolekcja promptów do generowania wycen jest statyczna.
-- Prosty, intuicyjny i responsywny interfejs użytkownika.
+
+- **Iteracyjny, dynamiczny formularz zbierania wymagań**: Zamiast pojedynczego formularza, użytkownik przechodzi przez sekwencję kroków (wizard), gdzie na każdym etapie prezentowane są pytania dostosowane do wcześniejszych odpowiedzi. Przykładowe etapy:
+  - Wprowadzenie ogólnego opisu projektu.
+  - Wybór głównych platform (frontend, backend, iOS, Android, inne).
+  - Doprecyzowanie wymagań funkcjonalnych i niefunkcjonalnych (np. integracje, bezpieczeństwo, skalowalność).
+  - Określenie priorytetów, ograniczeń i oczekiwań biznesowych.
+  - Uzupełnienie szczegółowych informacji technicznych (opcjonalnie, jeśli wymagane).
+- **Dynamiczne generowanie pytań**: System na bieżąco analizuje odpowiedzi i może zadawać dodatkowe pytania pogłębiające, aby doprecyzować zakres lub wyjaśnić niejasności.
+- **Walidacja i podsumowanie**: Po przejściu wszystkich kroków użytkownik otrzymuje podsumowanie zebranych informacji i może je zatwierdzić lub wrócić do wybranych etapów w celu korekty.
+- **Przetwarzanie i generowanie wyceny**: Po zatwierdzeniu danych wejściowych system uruchamia algorytm generowania wyceny, który:
+  - Analizuje zebrane odpowiedzi.
+  - Tworzy szczegółowy scope projektu (podział na zadania, estymacje czasowe).
+  - Wylicza man-days na podstawie zadanych parametrów (5-6h/dzień, bufor min. 30%).
+  - Prezentuje wynik w czytelnej formie.
+- **Możliwość powrotu do wcześniejszych kroków**: Użytkownik może w dowolnym momencie wrócić do poprzednich etapów i zmodyfikować odpowiedzi.
+- **Historia i ocena wycen**: Jako użytkownik chcę mieć możliwość przeglądania historii wygenerowanych wycen, aby móc śledzić zmiany i ponownie ocenić wcześniejsze wyceny.
 
 ## 4. Granice produktu
-- Produkt koncentruje się wyłącznie na automatyzacji procesu wyceny projektów IT i nie obejmuje funkcji zarządzania projektami po etapie wyceny.
-- Brak integracji z systemami zewnętrznymi poza mechanizmem OAuth, co wyklucza m.in. social login oraz zewnętrzne systemy płatności czy zarządzania projektami.
+- Produkt koncentruje się na iteracyjnym, dynamicznym procesie zbierania wymagań i automatyzacji wyceny projektów IT.
+- Brak pojedynczego, statycznego formularza – proces jest etapowy i adaptacyjny.
 - Mechanizm wyceny opiera się na stałych parametrach (5-6 godzin pracy dziennie i minimum 30% bufor), a szczegółowe progi zwiększenia bufora pozostają do ustalenia.
 - Produkt jest rozwijany w trybie part-time przez jednoosobowy zespół, z założonym terminem 4 tygodni, co wpływa na wybór rozwiązań technologicznych oraz zakres funkcjonalności.
 
@@ -39,33 +47,35 @@ Softwarehouse i inne firmy technologiczne borykają się z problemem czasochłon
   - Logowanie i rejestracja odbywa się na dedykowanych im stronach. 
   - Niezalogowany uzytkownik przekierowany jest na stronę logowania (landing page)
 
-### US-002: Wprowadzanie długiego opisu projektu
+### US-002: Iteracyjne wprowadzanie wymagań projektowych
 - ID: US-002
-- Tytuł: Wprowadzanie długiego opisu projektu
-- Opis: Jako użytkownik chcę wprowadzić szczegółowy opis projektu (do 10000 znaków) z walidacją tekstu, aby upewnić się, że dane są kompletne i poprawne.
+- Tytuł: Iteracyjne wprowadzanie wymagań projektowych
+- Opis: Jako użytkownik chcę przejść przez wieloetapowy, dynamiczny proces zbierania wymagań, w którym odpowiadam na kolejne pytania dotyczące projektu, aby system mógł precyzyjnie zrozumieć moje potrzeby i wygenerować adekwatną wycenę.
 - Kryteria akceptacji:
-  - Formularz przyjmuje opis do 10000 znaków.
-  - Walidacja tekstu wykrywa błędy, np. przekroczenie limitu znaków.
-  - System wyświetla jasne komunikaty walidacyjne.
+  - Proces składa się z kilku kroków, w których pytania są dostosowywane do wcześniejszych odpowiedzi.
+  - System może zadawać dodatkowe pytania pogłębiające w zależności od kontekstu.
+  - Użytkownik może wracać do poprzednich kroków i edytować odpowiedzi.
+  - Po zakończeniu procesu prezentowane jest podsumowanie do akceptacji.
+  - Walidacja danych na każdym etapie z jasnymi komunikatami o błędach.
 
-### US-003: Wybór platform i typu wyceny
+### US-003: Wybór platform i typu wyceny (w ramach procesu)
 - ID: US-003
-- Tytuł: Wybór platform i typu wyceny
-- Opis: Jako użytkownik chcę wybrać przynajmniej jedną platformę (np. frontend, backend, iOS, Android) oraz określić typ wyceny (Fixed Price lub Time & Material) za pomocą checkboxów, aby system mógł precyzyjnie wygenerować wycenę.
+- Tytuł: Wybór platform i typu wyceny (w ramach procesu)
+- Opis: Jako użytkownik chcę, aby wybór platform i typu wyceny był jednym z kroków procesu zbierania wymagań, a nie osobnym formularzem, aby cały proces był spójny i intuicyjny.
 - Kryteria akceptacji:
-  - Formularz wymusza wybór co najmniej jednej platformy.
-  - Checkboxy są opisane w sposób intuicyjny.
-  - Wybrany typ wyceny jest jednoznacznie przekazywany do systemu generującego wycenę.
+  - Wybór platform i typu wyceny następuje w dedykowanym kroku wizardu.
+  - System wymusza wybór co najmniej jednej platformy.
+  - Wybrany typ wyceny jest jednoznacznie przekazywany do algorytmu.
 
-### US-004: Generowanie automatycznej wyceny projektu
+### US-004: Automatyczne generowanie wyceny na podstawie iteracyjnie zebranych danych
 - ID: US-004
-- Tytuł: Generowanie automatycznej wyceny projektu
-- Opis: Jako użytkownik chcę, aby system automatycznie generował szczegółowy scope projektu na podstawie wprowadzonego opisu, wybranych platform, ustalonej liczby godzin pracy (5-6 godzin dziennie) oraz dodanego bufora (minimum 30%), aby uzyskać przejrzystą i dokładną wycenę.
+- Tytuł: Automatyczne generowanie wyceny na podstawie iteracyjnie zebranych danych
+- Opis: Jako użytkownik chcę, aby system generował wycenę na podstawie wszystkich zebranych w procesie krok po kroku odpowiedzi, aby uzyskać precyzyjny i dopasowany do mojego projektu wynik.
 - Kryteria akceptacji:
-  - System przetwarza dane wejściowe i generuje scope projektu.
-  - Obliczenia man-days uwzględniają stałą liczbę godzin pracy dziennie.
-  - Do wyceny dodawany jest bufor minimum 30%, z możliwością zwiększenia w przypadku większej złożoności.
-  - Wynik wyceny jest prezentowany użytkownikowi w czytelnej formie.
+  - System analizuje całość zebranych odpowiedzi.
+  - Generuje szczegółowy scope, podział na zadania i estymacje.
+  - Uwzględnia parametry pracy i bufor.
+  - Wynik prezentowany jest w czytelnej formie.
 
 ### US-005: Prezentacja i ocena wygenerowanej wyceny
 - ID: US-005
@@ -92,4 +102,4 @@ Softwarehouse i inne firmy technologiczne borykają się z problemem czasochłon
 - Wysoki poziom satysfakcji użytkowników, mierzony średnią oceną i opiniami w komentarzach.
 - Skuteczność walidacji danych, monitorowana przez testy jednostkowe i integracyjne.
 - Zapewnienie bezpieczeństwa danych zgodnie z obowiązującymi standardami ochrony danych wrażliwych.
-- Efektywność kosztowa infrastruktury, analizowana pod kątem wydajności i kosztów utrzymania systemu. 
+- Efektywność kosztowa infrastruktury, analizowana pod kątem wydajności i kosztów utrzymania systemu.
