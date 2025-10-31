@@ -28,6 +28,9 @@ type DiscoveryQuestionsForRoundRow = Database["public"]["Tables"]["discovery_que
 type DiscoveryQuestionsForRoundInsert = Database["public"]["Tables"]["discovery_questions"]["Insert"];
 type DiscoveryQuestionsForRoundUpdate = Database["public"]["Tables"]["discovery_questions"]["Update"];
 
+type DiscoveryConversationLogdRow = Database["public"]["Tables"]["discovery_conversation_log"]["Row"];
+type DiscoveryConversationLogInsert = Database["public"]["Tables"]["discovery_conversation_log"]["Insert"];
+
 export class DiscoveryService {
   // 👉 2. Constructor używa typowanego klienta z naszego projektu
   constructor(
@@ -190,6 +193,16 @@ export class DiscoveryService {
 
       const questionsFromDB = await this.supabase.from("discovery_questions").insert(insertData).select();
 
+      //TODO: should I add order field to table? Or timestamp is different for each question?
+      const insertQuestionLog: DiscoveryConversationLogInsert[] = validatedData.questions.map((q) => ({
+        session_id: sessionId,
+        content: q.question,
+        role: "agent",
+        round_number: round,
+      }));
+
+      await this.supabase.from("discovery_conversation_log").insert(insertQuestionLog);
+
       console.log("Questions for Round Response:", validatedData);
 
       return questionsFromDB.data || [];
@@ -203,17 +216,15 @@ export class DiscoveryService {
     }
   }
 
-  async saveAnswerToQuestion(sessionId: string, questionId: string, answer: string): Promise<void> {
-    const updateData: DiscoveryQuestionsForRoundUpdate = {
-      answer,
+  async saveAnswerToConversationLog(sessionId: string, answer: string, round: number): Promise<void> {
+    const insertData: DiscoveryConversationLogInsert = {
+      session_id: sessionId,
+      content: answer,
+      role: "user",
+      round_number: round,
     };
 
-    const { error } = await this.supabase
-      .from("discovery_questions")
-      .update(updateData)
-      .eq("id", questionId)
-      .eq("session_id", sessionId)
-      .single();
+    const { error } = await this.supabase.from("discovery_conversation_log").insert(insertData).single();
 
     if (error) {
       throw new Error(`DiscoveryService.saveAnswerToQuestion Failed: ${error.message}`);
