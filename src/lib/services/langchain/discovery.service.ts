@@ -1,6 +1,7 @@
 import {
   DiscoveryInitialDataSchema,
   InitialProjectAnalysisResponseSchema,
+  PartialAnalysisCompletionResponseSchema,
   QuestionsRoundResponseSchema,
   type DiscoveryInitialData,
 } from "@/lib/schemas";
@@ -167,7 +168,22 @@ export class DiscoveryService {
       }
     );
 
-    return { projectDescription, questions, contextForAgentAnalysis: completionAnalysisResult };
+    try {
+      const rawJson = JSON.parse(completionAnalysisResult.toString());
+
+      const validatedResponse = PartialAnalysisCompletionResponseSchema.parse(rawJson);
+
+      console.log(validatedResponse);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        const errorMessages = error.errors.map((err) => `${err.path.join(".")}: ${err.message}`).join("; ");
+        throw new Error(`DiscoveryService.initialAnalysis Response validation failed: ${errorMessages}`);
+      } else {
+        throw new Error(`DiscoveryService.initialAnalysis Unexpected error: ${error}`);
+      }
+    }
+
+    return {};
   }
 
   // TODO: Implement extractFinalAnalysis

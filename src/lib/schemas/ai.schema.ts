@@ -93,3 +93,48 @@ export const QuestionsRoundResponseSchema = z.object({
 });
 
 export type QuestionsRoundResponse = z.infer<typeof QuestionsRoundResponseSchema>;
+
+export const PartialAnalysisCompletionResponseSchema = z.object({
+  completness_score: z.number().min(0).describe("overall completness score"),
+  category_scores: z.object({
+    basic_info: z.number().min(0).max(100),
+    tech_stack: z.number().min(0).max(100),
+    integrations: z.number().min(0).max(100),
+    scale: z.number().min(0).max(100),
+    compliance: z.number().min(0).max(100),
+    assets: z.number().min(0).max(100),
+    delivery: z.number().min(0).max(100),
+  }),
+  collected_info: z.object({
+    basic_info: z.object({
+      goal: z.string(),
+      audience: z.array(z.string()),
+      type: z.string(),
+    }),
+    tech_stack: z.object({
+      preffered: z.array(z.string()),
+      required: z.array(z.string()),
+      constraints: z.array(z.string()),
+    }),
+    integrations: z.array(z.record(z.string(), z.string())),
+    scale: z.object({
+      initial_users: z.string(),
+      year_one_users: z.string(),
+      performance_requirements: z.array(z.string()),
+      multi_tenant: z.boolean(),
+    }),
+    compliance: z.array(z.any()),
+    assets: z.object({
+      has_legacy_system: z.boolean(),
+      has_designs: z.boolean(),
+      has_documentation: z.boolean(),
+    }),
+    delivery: z.record(z.string(), z.any()),
+  }),
+  missing_critical_info: z.array(z.string()),
+  recommendations: z.array(z.string()),
+  ready_for_estimations: z.boolean(),
+  reasoning: z.string(),
+});
+
+export type PartialAnalysisCompletionType = z.infer<typeof PartialAnalysisCompletionResponseSchema>;
