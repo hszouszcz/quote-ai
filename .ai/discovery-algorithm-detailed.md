@@ -1,6 +1,6 @@
 # 🧠 Project Discovery Algorithm - Detailed Specification
 
-**Version**: 1.0  
+**Version**: 1.0
 **Date**: October 27, 2025  
 **Purpose**: Complete algorithmic specification for AI-driven project discovery system
 
@@ -15,9 +15,10 @@ This document describes the complete algorithm for conducting an interactive, mu
 ## 🎯 PHASE 1: INITIALIZATION
 
 ### Input
+
 ```typescript
 interface InitializationInput {
-  userId: string;           // UUID of authenticated user
+  userId: string; // UUID of authenticated user
   initialDescription: string; // Raw project description (max 10,000 chars)
 }
 ```
@@ -25,30 +26,32 @@ interface InitializationInput {
 ### Process
 
 #### Step 1.1: Validate Input
+
 ```typescript
 function validateInitialization(input: InitializationInput): ValidationResult {
   const errors: string[] = [];
-  
+
   if (!input.userId || !isValidUUID(input.userId)) {
     errors.push("Invalid user ID");
   }
-  
+
   if (!input.initialDescription || input.initialDescription.trim().length === 0) {
     errors.push("Initial description is required");
   }
-  
+
   if (input.initialDescription.length > 10000) {
     errors.push("Description exceeds 10,000 character limit");
   }
-  
+
   return {
     valid: errors.length === 0,
-    errors
+    errors,
   };
 }
 ```
 
 #### Step 1.2: Create Discovery Session
+
 ```sql
 INSERT INTO discovery_sessions (
   user_id,
@@ -68,20 +71,22 @@ INSERT INTO discovery_sessions (
 ```
 
 #### Step 1.3: Initialize Conversation History
+
 ```typescript
 const systemPrompt = buildDiscoverySystemPrompt();
 const conversationHistory: Message[] = [
   {
     role: "system",
-    content: systemPrompt
-  }
+    content: systemPrompt,
+  },
 ];
 ```
 
 ### System Prompt (Phase 1)
 
 ```typescript
-const DISCOVERY_SYSTEM_PROMPT = `You are an expert presales consultant conducting a discovery session with a client who wants to build custom software.
+const DISCOVERY_SYSTEM_PROMPT =
+  `You are an expert presales consultant conducting a discovery session with a client who wants to build custom software.
 
 YOUR GOAL:
 Extract maximum valuable information through MINIMUM number of strategic questions.
@@ -213,29 +218,22 @@ Return your response as JSON following the specified format.`.trim();
 
 ```typescript
 interface Phase1Output {
-  sessionId: string;        // UUID of created session
-  round: 1;                 // Always 1 for initial phase
-  questions: Question[];    // Exactly 5 questions
-  reasoning: string;        // AI's explanation of question selection
+  sessionId: string; // UUID of created session
+  round: 1; // Always 1 for initial phase
+  questions: Question[]; // Exactly 5 questions
+  reasoning: string; // AI's explanation of question selection
   missingCategories: string[]; // Categories not yet covered
 }
 
 interface Question {
-  id: string;              // UUID (generated when saved to DB)
-  question: string;        // The actual question text
-  context: string;         // Why AI is asking this
+  id: string; // UUID (generated when saved to DB)
+  question: string; // The actual question text
+  context: string; // Why AI is asking this
   category: QuestionCategory;
   priority: 1 | 2 | 3 | 4 | 5;
 }
 
-type QuestionCategory = 
-  | "basic_info"
-  | "tech_stack"
-  | "integrations"
-  | "scale"
-  | "compliance"
-  | "assets"
-  | "delivery";
+type QuestionCategory = "basic_info" | "tech_stack" | "integrations" | "scale" | "compliance" | "assets" | "delivery";
 ```
 
 ### Database Operations (Phase 1)
@@ -275,7 +273,7 @@ INSERT INTO discovery_conversation_log (
 
 -- Update session with reasoning
 UPDATE discovery_sessions
-SET 
+SET
   current_reasoning = $reasoning,
   updated_at = NOW()
 WHERE id = $sessionId;
@@ -313,7 +311,7 @@ interface AnswerInput {
 ```typescript
 function validateAnswers(input: AnswerInput): ValidationResult {
   const errors: string[] = [];
-  
+
   // Check session exists and is active
   const session = await getSession(input.sessionId);
   if (!session) {
@@ -321,25 +319,20 @@ function validateAnswers(input: AnswerInput): ValidationResult {
   } else if (session.status !== "in_progress") {
     errors.push(`Session is ${session.status}, cannot accept answers`);
   }
-  
+
   // Get questions for current round
-  const questions = await getQuestionsByRound(
-    input.sessionId, 
-    session.current_round
-  );
-  
+  const questions = await getQuestionsByRound(input.sessionId, session.current_round);
+
   // Validate all questions are answered
   const answeredQuestionIds = Object.keys(input.answers);
-  const expectedQuestionIds = questions.map(q => q.id);
-  
-  const missingAnswers = expectedQuestionIds.filter(
-    id => !answeredQuestionIds.includes(id)
-  );
-  
+  const expectedQuestionIds = questions.map((q) => q.id);
+
+  const missingAnswers = expectedQuestionIds.filter((id) => !answeredQuestionIds.includes(id));
+
   if (missingAnswers.length > 0) {
     errors.push(`Missing answers for questions: ${missingAnswers.join(", ")}`);
   }
-  
+
   // Validate answer length
   Object.entries(input.answers).forEach(([qId, answer]) => {
     if (!answer || answer.trim().length === 0) {
@@ -349,10 +342,10 @@ function validateAnswers(input: AnswerInput): ValidationResult {
       errors.push(`Answer for ${qId} exceeds 5000 character limit`);
     }
   });
-  
+
   return {
     valid: errors.length === 0,
-    errors
+    errors,
   };
 }
 ```
@@ -362,7 +355,7 @@ function validateAnswers(input: AnswerInput): ValidationResult {
 ```sql
 -- Update each question with its answer
 UPDATE discovery_questions
-SET 
+SET
   answer = $answer,
   answered_at = NOW()
 WHERE id = $questionId;
@@ -386,21 +379,20 @@ INSERT INTO discovery_conversation_log (
 #### Step 2.3: Add Answers to Conversation Context
 
 ```typescript
-function formatAnswersForAI(
-  questions: Question[], 
-  answers: Record<string, string>
-): string {
-  const formattedQA = questions.map(q => {
-    return `Q: ${q.question}\nA: ${answers[q.id] || '[No answer]'}`;
-  }).join('\n\n');
-  
+function formatAnswersForAI(questions: Question[], answers: Record<string, string>): string {
+  const formattedQA = questions
+    .map((q) => {
+      return `Q: ${q.question}\nA: ${answers[q.id] || "[No answer]"}`;
+    })
+    .join("\n\n");
+
   return formattedQA;
 }
 
 // Add to conversation history
 conversationHistory.push({
   role: "human",
-  content: formatAnswersForAI(questions, answers)
+  content: formatAnswersForAI(questions, answers),
 });
 ```
 
@@ -413,7 +405,8 @@ conversationHistory.push({
 #### Step 3.1: Build Analysis Prompt
 
 ```typescript
-const COMPLETENESS_ANALYSIS_PROMPT = `Based on the conversation so far, analyze the completeness of gathered information.
+const COMPLETENESS_ANALYSIS_PROMPT =
+  `Based on the conversation so far, analyze the completeness of gathered information.
 
 SCORING GUIDELINES:
 - Each category has a weight (see system prompt for weights)
@@ -506,22 +499,20 @@ function buildCompletenessAnalysisPrompt(): string {
 #### Step 3.2: Invoke AI for Analysis
 
 ```typescript
-async function analyzeCompleteness(
-  conversationHistory: Message[]
-): Promise<CompletenessAnalysis> {
+async function analyzeCompleteness(conversationHistory: Message[]): Promise<CompletenessAnalysis> {
   const response = await aiAgent.invoke(
     [
       ...conversationHistory,
       {
         role: "human",
-        content: buildCompletenessAnalysisPrompt()
-      }
+        content: buildCompletenessAnalysisPrompt(),
+      },
     ],
     {
-      response_format: { type: "json_object" }
+      response_format: { type: "json_object" },
     }
   );
-  
+
   const parsed = JSON.parse(response.content);
   return CompletenessAnalysisSchema.parse(parsed);
 }
@@ -541,7 +532,7 @@ WHERE id = $sessionId;
 
 ```typescript
 interface CompletenessAnalysis {
-  completeness_score: number;           // 0-100
+  completeness_score: number; // 0-100
   category_scores: Record<QuestionCategory, number>;
   collected_info: CollectedInformation;
   missing_critical_info: string[];
@@ -576,44 +567,40 @@ interface CollectedInformation {
 ### Decision Algorithm
 
 ```typescript
-async function decideContinueOrComplete(
-  session: DiscoverySession,
-  analysis: CompletenessAnalysis
-): Promise<Decision> {
-  
+async function decideContinueOrComplete(session: DiscoverySession, analysis: CompletenessAnalysis): Promise<Decision> {
   // CASE 1: Maximum rounds reached
   if (session.current_round >= 3) {
     return {
       action: "COMPLETE",
-      reason: "Maximum rounds (3) reached"
+      reason: "Maximum rounds (3) reached",
     };
   }
-  
+
   // CASE 2: High completeness score
   if (analysis.ready_for_estimation) {
     return {
       action: "COMPLETE",
-      reason: `Completeness score ${analysis.completeness_score}% meets threshold (≥70%)`
+      reason: `Completeness score ${analysis.completeness_score}% meets threshold (≥70%)`,
     };
   }
-  
+
   // CASE 3: Minimal progress (avoid infinite loop)
   if (session.current_round >= 2) {
     const previousScore = await getPreviousCompletenessScore(session.id);
     const improvement = analysis.completeness_score - previousScore;
-    
+
     if (improvement < 10) {
       return {
         action: "COMPLETE",
-        reason: "Minimal progress in last round (< 10% improvement)"
+        reason: "Minimal progress in last round (< 10% improvement)",
       };
     }
   }
-  
+
   // CASE 4: Continue with next round
   return {
     action: "CONTINUE",
-    reason: `More information needed (current: ${analysis.completeness_score}%, target: 70%)`
+    reason: `More information needed (current: ${analysis.completeness_score}%, target: 70%)`,
   };
 }
 ```
@@ -623,6 +610,7 @@ async function decideContinueOrComplete(
 ## ➡️ PHASE 5: GENERATE FOLLOW-UP QUESTIONS
 
 ### Conditions
+
 - Only execute if `decideContinueOrComplete()` returns `CONTINUE`
 - Current round < 3
 
@@ -637,13 +625,13 @@ function buildFollowUpPrompt(analysis: CompletenessAnalysis): string {
 CATEGORY COVERAGE:
 ${Object.entries(analysis.category_scores)
   .map(([cat, score]) => `- ${cat}: ${score}%`)
-  .join('\n')}
+  .join("\n")}
 
 MISSING CRITICAL INFORMATION:
-${analysis.missing_critical_info.map((info, i) => `${i + 1}. ${info}`).join('\n')}
+${analysis.missing_critical_info.map((info, i) => `${i + 1}. ${info}`).join("\n")}
 
 RECOMMENDATIONS FOR NEXT QUESTIONS:
-${analysis.recommendations.map((rec, i) => `${i + 1}. ${rec}`).join('\n')}
+${analysis.recommendations.map((rec, i) => `${i + 1}. ${rec}`).join("\n")}
 
 TASK:
 Generate exactly 5 follow-up questions that address the most critical gaps in our understanding.
@@ -674,25 +662,24 @@ async function generateFollowUpQuestions(
   analysis: CompletenessAnalysis,
   currentRound: number
 ): Promise<QuestionSet> {
-  
   const followUpPrompt = buildFollowUpPrompt(analysis);
-  
+
   const response = await aiAgent.invoke(
     [
       ...conversationHistory,
       {
         role: "human",
-        content: followUpPrompt
-      }
+        content: followUpPrompt,
+      },
     ],
     {
-      response_format: { type: "json_object" }
+      response_format: { type: "json_object" },
     }
   );
-  
+
   const parsed = JSON.parse(response.content);
   const validated = QuestionSetSchema.parse(parsed);
-  
+
   return validated;
 }
 ```
@@ -702,7 +689,7 @@ async function generateFollowUpQuestions(
 ```sql
 -- Increment round number
 UPDATE discovery_sessions
-SET 
+SET
   current_round = current_round + 1,
   current_reasoning = $newReasoning,
   updated_at = NOW()
@@ -745,11 +732,11 @@ INSERT INTO discovery_conversation_log (
 ```typescript
 interface Phase5Output {
   sessionId: string;
-  round: number;              // 2 or 3
-  questions: Question[];      // Exactly 5 new questions
+  round: number; // 2 or 3
+  questions: Question[]; // Exactly 5 new questions
   reasoning: string;
-  completenessScore: number;  // Current score
-  discoveryComplete: false;   // Always false in this phase
+  completenessScore: number; // Current score
+  discoveryComplete: false; // Always false in this phase
 }
 ```
 
@@ -758,6 +745,7 @@ interface Phase5Output {
 ## ✅ PHASE 6: FINAL EXTRACTION
 
 ### Conditions
+
 - Only execute when `decideContinueOrComplete()` returns `COMPLETE`
 
 ### Process
@@ -765,7 +753,8 @@ interface Phase5Output {
 #### Step 6.1: Build Final Extraction Prompt
 
 ```typescript
-const FINAL_EXTRACTION_PROMPT = `Based on the entire discovery conversation, extract ALL gathered information into a comprehensive project analysis.
+const FINAL_EXTRACTION_PROMPT =
+  `Based on the entire discovery conversation, extract ALL gathered information into a comprehensive project analysis.
 
 TASK:
 Create a complete, structured summary of the project that will be used for detailed estimation.
@@ -857,30 +846,27 @@ function buildFinalExtractionPrompt(): string {
 #### Step 6.2: Invoke AI for Final Extraction
 
 ```typescript
-async function extractFinalAnalysis(
-  conversationHistory: Message[]
-): Promise<EnhancedProjectAnalysis> {
-  
+async function extractFinalAnalysis(conversationHistory: Message[]): Promise<EnhancedProjectAnalysis> {
   const response = await aiAgent.invoke(
     [
       ...conversationHistory,
       {
         role: "human",
-        content: buildFinalExtractionPrompt()
-      }
+        content: buildFinalExtractionPrompt(),
+      },
     ],
     {
       response_format: { type: "json_object" },
-      temperature: 0.3,  // Lower temperature for consistent extraction
-      max_tokens: 4000   // Allow comprehensive response
+      temperature: 0.3, // Lower temperature for consistent extraction
+      max_tokens: 4000, // Allow comprehensive response
     }
   );
-  
+
   const parsed = JSON.parse(response.content);
-  
+
   // Validate against comprehensive schema
   const validated = EnhancedProjectAnalysisSchema.parse(parsed);
-  
+
   return validated;
 }
 ```
@@ -931,36 +917,36 @@ interface EnhancedProjectAnalysis {
   key_features: Record<string, string[]>;
   non_functional: string[];
   open_questions: string[];
-  
+
   // Extended fields
   technology_stack?: {
     preferred?: string[];
     required?: string[];
     constraints?: string[];
   };
-  
+
   integrations?: Array<{
     system: string;
     type: "REST" | "GraphQL" | "Webhook" | "SDK" | "Database" | "Other";
     criticality: "Critical" | "Important" | "Nice-to-have";
   }>;
-  
+
   scale_expectations?: {
     initial_users?: string;
     year_one_users?: string;
     performance_requirements?: string[];
     multi_tenant?: boolean;
   };
-  
+
   existing_assets?: {
     has_legacy_system: boolean;
     has_designs: boolean;
     has_documentation: boolean;
     details?: string[];
   };
-  
+
   compliance?: Array<"GDPR" | "HIPAA" | "PCI-DSS" | "SOC2" | "ISO27001" | "None">;
-  
+
   delivery_context?: {
     client_has_team?: boolean;
     support_level?: "None" | "Basic" | "Full";
@@ -974,104 +960,87 @@ interface EnhancedProjectAnalysis {
 ## 🔁 COMPLETE ALGORITHM FLOW
 
 ```typescript
-async function runDiscoverySession(
-  userId: string,
-  initialDescription: string
-): Promise<DiscoveryResult> {
-  
+async function runDiscoverySession(userId: string, initialDescription: string): Promise<DiscoveryResult> {
   // ========== PHASE 1: INITIALIZATION ==========
   const validation = validateInitialization({ userId, initialDescription });
   if (!validation.valid) {
     throw new ValidationError(validation.errors);
   }
-  
+
   const sessionId = await createSession(userId, initialDescription);
-  const conversationHistory: Message[] = [
-    { role: "system", content: buildDiscoverySystemPrompt() }
-  ];
-  
+  const conversationHistory: Message[] = [{ role: "system", content: buildDiscoverySystemPrompt() }];
+
   const initialPrompt = buildInitialQuestionPrompt(initialDescription);
   const round1Questions = await generateQuestions(conversationHistory, initialPrompt);
-  
+
   await saveQuestions(sessionId, 1, round1Questions);
   conversationHistory.push({
     role: "ai",
-    content: JSON.stringify(round1Questions)
+    content: JSON.stringify(round1Questions),
   });
-  
+
   // Return to user - wait for answers
   return {
     sessionId,
     round: 1,
     questions: round1Questions.questions,
     reasoning: round1Questions.reasoning,
-    status: "awaiting_answers"
+    status: "awaiting_answers",
   };
 }
 
-async function processAnswersAndContinue(
-  sessionId: string,
-  answers: Record<string, string>
-): Promise<DiscoveryResult> {
-  
+async function processAnswersAndContinue(sessionId: string, answers: Record<string, string>): Promise<DiscoveryResult> {
   // ========== PHASE 2: ANSWER PROCESSING ==========
   const validation = validateAnswers({ sessionId, answers });
   if (!validation.valid) {
     throw new ValidationError(validation.errors);
   }
-  
+
   await saveAnswers(sessionId, answers);
-  
+
   const session = await getSession(sessionId);
   const conversationHistory = await loadConversationHistory(sessionId);
-  
+
   // Add answers to context
-  const formattedAnswers = formatAnswersForAI(
-    await getCurrentRoundQuestions(sessionId),
-    answers
-  );
+  const formattedAnswers = formatAnswersForAI(await getCurrentRoundQuestions(sessionId), answers);
   conversationHistory.push({
     role: "human",
-    content: formattedAnswers
+    content: formattedAnswers,
   });
-  
+
   // ========== PHASE 3: COMPLETENESS ANALYSIS ==========
   const analysis = await analyzeCompleteness(conversationHistory);
   await saveCompletenessScore(sessionId, analysis.completeness_score);
-  
+
   // ========== PHASE 4: DECISION ==========
   const decision = await decideContinueOrComplete(session, analysis);
-  
+
   if (decision.action === "COMPLETE") {
     // ========== PHASE 6: FINAL EXTRACTION ==========
     const finalAnalysis = await extractFinalAnalysis(conversationHistory);
     await markSessionComplete(sessionId, finalAnalysis);
-    
+
     return {
       sessionId,
       discoveryComplete: true,
       completenessScore: analysis.completeness_score,
       finalAnalysis,
-      reason: decision.reason
+      reason: decision.reason,
     };
   }
-  
+
   // ========== PHASE 5: GENERATE FOLLOW-UP ==========
   const nextRound = session.current_round + 1;
-  const followUpQuestions = await generateFollowUpQuestions(
-    conversationHistory,
-    analysis,
-    nextRound
-  );
-  
+  const followUpQuestions = await generateFollowUpQuestions(conversationHistory, analysis, nextRound);
+
   await saveQuestions(sessionId, nextRound, followUpQuestions);
   await incrementRound(sessionId, followUpQuestions.reasoning);
-  
+
   conversationHistory.push({
     role: "ai",
-    content: JSON.stringify(followUpQuestions)
+    content: JSON.stringify(followUpQuestions),
   });
-  
+
   return {
     sessionId,
     round: nextRound,
@@ -1079,7 +1048,7 @@ async function processAnswersAndContinue(
     reasoning: followUpQuestions.reasoning,
     completenessScore: analysis.completeness_score,
     discoveryComplete: false,
-    status: "awaiting_answers"
+    status: "awaiting_answers",
   };
 }
 ```
@@ -1089,38 +1058,30 @@ async function processAnswersAndContinue(
 ## 📐 COMPLETENESS SCORING FORMULA
 
 ```typescript
-function calculateCompletenessScore(
-  categoryScores: Record<QuestionCategory, number>
-): number {
-  
+function calculateCompletenessScore(categoryScores: Record<QuestionCategory, number>): number {
   const weights: Record<QuestionCategory, number> = {
-    basic_info: 0.30,
-    tech_stack: 0.20,
+    basic_info: 0.3,
+    tech_stack: 0.2,
     integrations: 0.15,
-    scale: 0.10,
-    compliance: 0.10,
-    assets: 0.10,
-    delivery: 0.05
+    scale: 0.1,
+    compliance: 0.1,
+    assets: 0.1,
+    delivery: 0.05,
   };
-  
+
   let totalScore = 0;
-  
+
   for (const [category, score] of Object.entries(categoryScores)) {
     const weight = weights[category as QuestionCategory];
     totalScore += score * weight;
   }
-  
+
   return Math.round(totalScore);
 }
 
-function scoreCategoryCompleteness(
-  category: QuestionCategory,
-  collectedInfo: any
-): number {
-  
+function scoreCategoryCompleteness(category: QuestionCategory, collectedInfo: any): number {
   // Scoring rubric for each category
   const scoringRules: Record<QuestionCategory, (info: any) => number> = {
-    
     basic_info: (info) => {
       let score = 0;
       if (info.goal && info.goal.length > 20) score += 40;
@@ -1128,7 +1089,7 @@ function scoreCategoryCompleteness(
       if (info.type) score += 30;
       return Math.min(score, 100);
     },
-    
+
     tech_stack: (info) => {
       let score = 0;
       if (info.preferred && info.preferred.length > 0) score += 40;
@@ -1136,20 +1097,20 @@ function scoreCategoryCompleteness(
       if (info.constraints && info.constraints.length > 0) score += 30;
       return Math.min(score, 100);
     },
-    
+
     integrations: (info) => {
       if (!info || info.length === 0) return 0;
-      
+
       let score = 0;
       // Has at least one integration
       if (info.length >= 1) score += 50;
       // All integrations have criticality defined
-      if (info.every(i => i.criticality)) score += 30;
+      if (info.every((i) => i.criticality)) score += 30;
       // Integration types specified
-      if (info.every(i => i.type)) score += 20;
+      if (info.every((i) => i.type)) score += 20;
       return Math.min(score, 100);
     },
-    
+
     scale: (info) => {
       let score = 0;
       if (info.initial_users) score += 30;
@@ -1158,14 +1119,14 @@ function scoreCategoryCompleteness(
       if (info.multi_tenant !== undefined) score += 20;
       return Math.min(score, 100);
     },
-    
+
     compliance: (info) => {
       if (!info || info.length === 0) return 0;
       if (info.includes("None")) return 100; // Explicitly stated no compliance
       if (info.length >= 1) return 100; // Has compliance requirements
       return 0;
     },
-    
+
     assets: (info) => {
       let score = 0;
       if (info.has_legacy_system !== undefined) score += 25;
@@ -1174,16 +1135,16 @@ function scoreCategoryCompleteness(
       if (info.details && info.details.length > 0) score += 25;
       return Math.min(score, 100);
     },
-    
+
     delivery: (info) => {
       let score = 0;
       if (info.client_has_team !== undefined) score += 40;
       if (info.support_level) score += 30;
       if (info.methodology) score += 30;
       return Math.min(score, 100);
-    }
+    },
   };
-  
+
   const scoringFunction = scoringRules[category];
   return scoringFunction(collectedInfo);
 }
@@ -1198,6 +1159,7 @@ function scoreCategoryCompleteness(
 **User Input**: "I want to build a platform for climbing gyms"
 
 **AI Questions**:
+
 1. Can you describe the main business problem this platform solves and who will use it?
 2. What are the core features you envision for gym owners and customers?
 3. Do you have any technology preferences or constraints we should know about?
@@ -1205,6 +1167,7 @@ function scoreCategoryCompleteness(
 5. What's your expected timeline and do you have a team that can help with development?
 
 **User Answers**:
+
 1. "We want to help climbing gyms manage bookings, memberships, and customer engagement. Users are gym owners (admins) and gym members (customers)."
 2. "Gym owners need a dashboard to manage classes, track attendance, and handle payments. Customers need a mobile-friendly interface to book classes, track progress, and manage memberships."
 3. "We prefer modern web technologies, our team knows React. Must work on mobile browsers."
@@ -1212,6 +1175,7 @@ function scoreCategoryCompleteness(
 5. "Launch in 6 months. We have a small internal team (2 developers) who can help with frontend."
 
 **Completeness After Round 1**: 55%
+
 - basic_info: 80%
 - tech_stack: 60%
 - integrations: 70%
@@ -1225,6 +1189,7 @@ function scoreCategoryCompleteness(
 ### Round 2
 
 **AI Questions** (adapted based on Round 1):
+
 1. How many gyms do you expect to onboard initially and within the first year?
 2. What are your specific requirements for the Mindbody integration - what data needs to sync?
 3. Will you be handling sensitive personal or payment data that requires compliance certifications like GDPR or PCI-DSS?
@@ -1232,6 +1197,7 @@ function scoreCategoryCompleteness(
 5. What level of performance do you expect - how many concurrent users should the system handle?
 
 **User Answers**:
+
 1. "Start with 5 gyms (pilot), grow to 50 gyms in year 1. Each gym has 200-500 members."
 2. "We need to sync class schedules and availability from Mindbody, bookings made on our platform should update Mindbody."
 3. "Yes, we're in EU so GDPR compliance is required. Stripe handles PCI compliance but we need to follow best practices."
@@ -1239,6 +1205,7 @@ function scoreCategoryCompleteness(
 5. "Need to handle 100-200 concurrent users during peak hours (evenings). Page load under 2 seconds."
 
 **Completeness After Round 2**: 78%
+
 - basic_info: 85%
 - tech_stack: 70%
 - integrations: 85%
@@ -1268,16 +1235,8 @@ function scoreCategoryCompleteness(
       "Customer profile management",
       "Progress tracking for members"
     ],
-    "Payments": [
-      "Stripe integration for payments",
-      "Subscription billing",
-      "Payment history and invoices"
-    ],
-    "Admin Dashboard": [
-      "Multi-gym management",
-      "Analytics and reporting",
-      "User management"
-    ]
+    "Payments": ["Stripe integration for payments", "Subscription billing", "Payment history and invoices"],
+    "Admin Dashboard": ["Multi-gym management", "Analytics and reporting", "User management"]
   },
   "non_functional": [
     "Mobile-responsive design",
@@ -1311,10 +1270,7 @@ function scoreCategoryCompleteness(
   "scale_expectations": {
     "initial_users": "5 gyms, 1000-2500 total users",
     "year_one_users": "50 gyms, 10000-25000 total users",
-    "performance_requirements": [
-      "100-200 concurrent users during peak hours",
-      "Page load time < 2 seconds"
-    ],
+    "performance_requirements": ["100-200 concurrent users during peak hours", "Page load time < 2 seconds"],
     "multi_tenant": true
   },
   "existing_assets": {
@@ -1337,6 +1293,7 @@ function scoreCategoryCompleteness(
 ## 🔧 ERROR HANDLING
 
 ### Validation Errors
+
 ```typescript
 class ValidationError extends Error {
   constructor(public errors: string[]) {
@@ -1346,18 +1303,16 @@ class ValidationError extends Error {
 ```
 
 ### AI Response Errors
+
 ```typescript
-async function invokeWithRetry(
-  messages: Message[],
-  maxRetries = 3
-): Promise<AIResponse> {
+async function invokeWithRetry(messages: Message[], maxRetries = 3): Promise<AIResponse> {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       const response = await aiAgent.invoke(messages);
       return response;
     } catch (error) {
       if (attempt === maxRetries) throw error;
-      
+
       console.warn(`AI invocation failed (attempt ${attempt}), retrying...`);
       await sleep(1000 * attempt); // Exponential backoff
     }
@@ -1366,17 +1321,15 @@ async function invokeWithRetry(
 ```
 
 ### Session State Errors
+
 ```typescript
 async function getSession(sessionId: string): Promise<DiscoverySession> {
-  const session = await db.query(
-    'SELECT * FROM discovery_sessions WHERE id = $1',
-    [sessionId]
-  );
-  
+  const session = await db.query("SELECT * FROM discovery_sessions WHERE id = $1", [sessionId]);
+
   if (!session) {
     throw new SessionNotFoundError(sessionId);
   }
-  
+
   return session;
 }
 ```
@@ -1394,20 +1347,20 @@ interface DiscoveryMetrics {
   sessions_completed: number;
   sessions_abandoned: number;
   completion_rate: number; // completed / started
-  
+
   // Question metrics
   avg_questions_per_session: number;
   avg_answer_length: number;
   most_common_categories: QuestionCategory[];
-  
+
   // Completeness metrics
   avg_completeness_score: number;
   avg_score_by_round: Record<number, number>;
-  
+
   // Performance metrics
   avg_session_duration_minutes: number;
   avg_ai_response_time_ms: number;
-  
+
   // Quality metrics
   sessions_with_all_categories_covered: number;
   sessions_ready_after_round_1: number;

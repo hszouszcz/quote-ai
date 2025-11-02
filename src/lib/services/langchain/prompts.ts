@@ -422,3 +422,154 @@ ${componentsJson.trim()}
 </components>
 ${riskSection}`.trim();
 };
+
+/**
+ * System prompt for completeness analysis after discovery rounds
+ */
+export const COMPLETENESS_ANALYSIS_SYSTEM_PROMPT =
+  `You are a senior presales consultant analyzing discovery session completeness.
+
+YOUR GOAL:
+Evaluate how complete the gathered information is for accurate project estimation.
+
+SCORING GUIDELINES:
+- Each category has a weight (see below)
+- Score each category 0-100% based on:
+  * 0%: No information gathered
+  * 25%: Minimal information (1-2 basic answers)
+  * 50%: Partial information (some key aspects covered)
+  * 75%: Good coverage (most important aspects covered)
+  * 100%: Complete coverage (all aspects thoroughly covered)
+
+CATEGORY WEIGHTS:
+- basic_info: 30%
+- tech_stack: 20%
+- integrations: 15%
+- scale: 10%
+- compliance: 10%
+- assets: 10%
+- delivery: 5%
+
+OVERALL SCORE CALCULATION:
+completeness_score = Σ(category_score × category_weight)
+
+READINESS CRITERIA:
+Set ready_for_estimation = true IF:
+- Overall completeness_score ≥ 70%, AND
+- basic_info ≥ 75%, AND
+- tech_stack ≥ 50%, AND
+- At least 4 out of 7 categories have some coverage (>25%)
+
+IMPORTANT: You must respond with ONLY a valid JSON object following the specified format.
+Do not include any text before or after the JSON object. Return only valid JSON.`.trim();
+
+/**
+ * User prompt for completeness analysis
+ */
+export const COMPLETENESS_ANALYSIS_PROMPT =
+  `Based on the conversation so far, analyze the completeness of gathered information.
+
+SCORING GUIDELINES:
+- Each category has a weight (see system prompt for weights)
+- Score each category from 0-100% based on:
+  * 0%: No information gathered
+  * 25%: Minimal information (1-2 basic answers)
+  * 50%: Partial information (some key aspects covered)
+  * 75%: Good coverage (most important aspects covered)
+  * 100%: Complete coverage (all aspects thoroughly covered)
+
+CATEGORY WEIGHTS:
+- basic_info: 30%
+- tech_stack: 20%
+- integrations: 15%
+- scale: 10%
+- compliance: 10%
+- assets: 10%
+- delivery: 5%
+
+OVERALL SCORE CALCULATION:
+completeness_score = Σ(category_score × category_weight)
+
+READINESS CRITERIA:
+Set ready_for_estimation = true IF:
+- Overall completeness_score ≥ 70%, AND
+- basic_info ≥ 75%, AND
+- tech_stack ≥ 50%, AND
+- At least 4 out of 7 categories have some coverage (>25%)
+
+RESPONSE FORMAT (valid JSON only):
+{
+  "completeness_score": 65,
+  "category_scores": {
+    "basic_info": 80,
+    "tech_stack": 60,
+    "integrations": 50,
+    "scale": 40,
+    "compliance": 0,
+    "assets": 75,
+    "delivery": 25
+  },
+  "collected_info": {
+    "basic_info": {
+      "goal": "SaaS platform for climbing gyms",
+      "audience": ["gym owners", "gym members"],
+      "type": "SaaS platform"
+    },
+    "tech_stack": {
+      "preferred": ["React", "Node.js"],
+      "required": [],
+      "constraints": ["Must work on mobile browsers"]
+    },
+    "integrations": [
+      { "system": "Stripe", "type": "REST", "criticality": "Critical" },
+      { "system": "Mindbody", "type": "REST", "criticality": "Important" }
+    ],
+    "scale": {
+      "initial_users": "100",
+      "year_one_users": "10000",
+      "performance_requirements": [],
+      "multi_tenant": true
+    },
+    "compliance": [],
+    "assets": {
+      "has_legacy_system": false,
+      "has_designs": true,
+      "has_documentation": false
+    },
+    "delivery": {}
+  },
+  "missing_critical_info": [
+    "No compliance requirements specified - ask if GDPR/HIPAA applies",
+    "Performance requirements unclear - ask about response time expectations",
+    "Support level after launch not discussed"
+  ],
+  "recommendations": [
+    "Clarify payment flow details (one-time vs subscription)",
+    "Ask about admin dashboard requirements",
+    "Understand user authentication preferences"
+  ],
+  "ready_for_estimation": false,
+  "reasoning": "While we have good coverage of basic info and integrations, we're missing critical compliance information and detailed technical requirements. One more round of questions should get us to 70%+ completeness."
+}`.trim();
+
+export function buildCompletnessAnalysisHumanPrompt(
+  initialDescription: string,
+  initialAnalysis: string,
+  questionsAndAnswers: string
+) {
+  return `
+  <initial_project_description>
+  ${initialDescription}
+  </initial_project_description>
+
+  <previous_analysis>
+    ${initialAnalysis}
+  </previous_analysis>
+
+  <questions_and_answers>
+   ${questionsAndAnswers}
+  </questions_and_answers>
+
+  ${COMPLETENESS_ANALYSIS_PROMPT}
+  `.trim();
+}

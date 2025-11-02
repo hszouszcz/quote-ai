@@ -3,16 +3,24 @@
 // DTO and Command Model definitions for the API, constructed based on the database models and API plan.
 
 // Import the Json type and Database types from the database definition
-import type { Database, Json } from "./db/database.types";
+import type { Database, Json } from "@/types/database.types";
 
 // Utility type aliases from database tables
 // Note: UserRow removed - we now use auth.users directly via Supabase Auth
-type QuotationRow = Database["public"]["Tables"]["quotations"]["Row"];
-type QuotationTaskRow = Database["public"]["Tables"]["quotation_tasks"]["Row"];
-type PlatformRow = Database["public"]["Tables"]["platforms"]["Row"];
-type ReviewRow = Database["public"]["Tables"]["reviews"]["Row"];
-type SessionRow = Database["public"]["Tables"]["sessions"]["Row"];
+export type QuotationTaskRow = Database["public"]["Tables"]["quotation_tasks"]["Row"];
+export type QuotationRow = Database["public"]["Tables"]["quotations"]["Row"];
+export type PlatformRow = Database["public"]["Tables"]["platforms"]["Row"];
+export type ReviewRow = Database["public"]["Tables"]["reviews"]["Row"];
+export type SessionRow = Database["public"]["Tables"]["sessions"]["Row"];
+export type DiscoverySessionRow = Database["public"]["Tables"]["discovery_sessions"]["Row"];
+export type DiscoverySessionInsert = Database["public"]["Tables"]["discovery_sessions"]["Insert"];
+export type DiscoverySessionUpdate = Database["public"]["Tables"]["discovery_sessions"]["Update"];
 
+export type DiscoveryQuestionsForRoundRow = Database["public"]["Tables"]["discovery_questions"]["Row"];
+export type DiscoveryQuestionsForRoundInsert = Database["public"]["Tables"]["discovery_questions"]["Insert"];
+export type DiscoveryQuestionsForRoundUpdate = Database["public"]["Tables"]["discovery_questions"]["Update"];
+
+export type DiscoveryConversationLogInsert = Database["public"]["Tables"]["discovery_conversation_log"]["Insert"];
 // =========================
 // Users DTOs and Commands
 // =========================

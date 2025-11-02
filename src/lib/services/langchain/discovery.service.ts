@@ -10,10 +10,13 @@ import z from "zod";
 import { ChatOpenAI } from "@langchain/openai";
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 import {
+  buildCompletnessAnalysisHumanPrompt,
   buildInitialQuestionPrompt,
+  COMPLETENESS_ANALYSIS_SYSTEM_PROMPT,
   DISCOVERY__GENERATE_QUESTIONS_SYSTEM_PROMPT,
   PROJECT_DISCOVERY_INITIAL_ANALYSIS_SYSTEM_PROMPT,
 } from "./prompts";
+import formatQA from "@/lib/utils/formatQA";
 
 const OPENROUTER_API_KEY = import.meta.env.OPENROUTER_API_KEY;
 const OPENROUTER_BASE_URL = import.meta.env.OPENROUTER_BASE_URL;
@@ -28,7 +31,6 @@ type DiscoveryQuestionsForRoundRow = Database["public"]["Tables"]["discovery_que
 type DiscoveryQuestionsForRoundInsert = Database["public"]["Tables"]["discovery_questions"]["Insert"];
 type DiscoveryQuestionsForRoundUpdate = Database["public"]["Tables"]["discovery_questions"]["Update"];
 
-type DiscoveryConversationLogdRow = Database["public"]["Tables"]["discovery_conversation_log"]["Row"];
 type DiscoveryConversationLogInsert = Database["public"]["Tables"]["discovery_conversation_log"]["Insert"];
 
 export class DiscoveryService {
@@ -109,6 +111,13 @@ export class DiscoveryService {
       const rawJson = JSON.parse(response.content.toString());
       const validatedData = InitialProjectAnalysisResponseSchema.parse(rawJson);
 
+      await this.supabase
+        .from("discovery_sessions")
+        .update({ final_analysis: validatedData })
+        .eq("id", sessionId)
+        .select()
+        .single();
+
       return validatedData;
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -120,8 +129,46 @@ export class DiscoveryService {
     }
   }
 
-  // TODO: Implement processAnswer
-  // async processAnswer() {}
+  async processAnswers(sessionId: string) {
+    const { data, error } = await this.supabase
+      .from("discovery_sessions")
+      .select(
+        `initial_description,
+        final_analysis,
+        discovery_questions (
+          *
+        )`
+      )
+      .eq("id", sessionId)
+      .single();
+    if (error) {
+      throw new Error(`DiscoveryService.processAnswers Failed to retrieve project description: ${error.message}`);
+    }
+
+    const projectDescription = data?.initial_description;
+    const partialAnalysis = data?.final_analysis || "";
+    const questions = data?.discovery_questions;
+
+    const questionsAndAnswers = formatQA(questions || []);
+
+    const completionAnalysisResult = await this.agent.invoke(
+      [
+        new SystemMessage(COMPLETENESS_ANALYSIS_SYSTEM_PROMPT),
+        new HumanMessage(
+          buildCompletnessAnalysisHumanPrompt(
+            projectDescription.trim(),
+            partialAnalysis?.toString().trim(),
+            questionsAndAnswers.trim()
+          )
+        ),
+      ],
+      {
+        response_format: { type: "json_object" },
+      }
+    );
+
+    return { projectDescription, questions, contextForAgentAnalysis: completionAnalysisResult };
+  }
 
   // TODO: Implement extractFinalAnalysis
   // async extractFinalAnalysis() {}
@@ -229,5 +276,23 @@ export class DiscoveryService {
     if (error) {
       throw new Error(`DiscoveryService.saveAnswerToQuestion Failed: ${error.message}`);
     }
+  }
+
+  async saveAnswerForQuestion(sessionId: string, questionId: string, round: number, answer: string): Promise<void> {
+    let sanitizedAnswer: string = answer;
+    if (answer.trim().length === 0) {
+      sanitizedAnswer = "No answer provided.";
+    }
+    if (answer.length > 2000) {
+      sanitizedAnswer = answer.slice(0, 2000) + "...[truncated]";
+    }
+    const insertData: DiscoveryQuestionsForRoundUpdate = {
+      session_id: sessionId,
+      round_number: round,
+      answer: sanitizedAnswer,
+      answered_at: new Date().toISOString(),
+    };
+
+    await this.supabase.from("discovery_questions").update(insertData).eq("id", questionId).select().single();
   }
 }
