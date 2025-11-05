@@ -5,6 +5,7 @@ import { PlatformSelection } from "./PlatformSelection";
 import { EstimationTypeSelector } from "./EstimationTypeSelector";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import DiscoveryInput from "../discovery/DiscoveryInput";
 
 interface QuotationFormState extends CreateQuotationCommand {
   errors: {
@@ -123,6 +124,7 @@ export function QuotationForm() {
             onChange={handleDescriptionChange}
             error={formState.errors.scope}
           />
+          <DiscoveryInput />
 
           <PlatformSelection
             selectedPlatforms={formState.platforms}

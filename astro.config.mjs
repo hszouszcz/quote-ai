@@ -16,7 +16,4 @@ export default defineConfig({
   vite: {
     plugins: [tailwindVite()],
   },
-  experimental: {
-    session: true,
-  },
 });

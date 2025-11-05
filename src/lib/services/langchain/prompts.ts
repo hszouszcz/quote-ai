@@ -468,6 +468,7 @@ Do not include any text before or after the JSON object. Return only valid JSON.
  */
 export const COMPLETENESS_ANALYSIS_PROMPT =
   `Based on the conversation so far, analyze the completeness of gathered information.
+  IMPORTANT: If any answer given to the question doesn't have a common sense or does not address the scope of the question - ignore it.
 
 SCORING GUIDELINES:
 - Each category has a weight (see system prompt for weights)

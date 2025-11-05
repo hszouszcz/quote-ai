@@ -62,6 +62,14 @@ The following scripts are available in the project:
 - **lint:** Runs ESLint to analyze the code for issues (`eslint .`)
 - **lint:fix:** Automatically fixes ESLint issues (`eslint . --fix`)
 - **format:** Formats the code using Prettier (`prettier --write .`)
+- **db:types:** Generates TypeScript types from Supabase schema (`supabase gen types typescript --local > src/types/database.types.ts`)
+
+## Developer Documentation
+
+- 📘 [Supabase TypeScript Typing Guide](./docs/SUPABASE_TYPING_GUIDE.md) - Comprehensive guide on typing Supabase queries
+- ⚡ [Supabase TypeScript Cheatsheet](./docs/SUPABASE_TYPING_CHEATSHEET.md) - Quick reference for common patterns
+- 🏗️ [Architecture](./ARCHITECTURE.md) - Project architecture overview
+- 🚨 [Error Handling](./docs/ERROR_HANDLING.md) - Error handling guidelines
 
 ## Project Scope
 
