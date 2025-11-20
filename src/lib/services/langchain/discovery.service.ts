@@ -290,11 +290,16 @@ export class DiscoveryService {
     const { error } = await this.supabase.from("discovery_conversation_log").insert(insertData).single();
 
     if (error) {
-      throw new Error(`DiscoveryService.saveAnswerToQuestion Failed: ${error.message}`);
+      throw new Error(`DiscoveryService.saveAnswerToConversationLog Failed: ${error.message}`);
     }
   }
 
-  async saveAnswerForQuestion(sessionId: string, questionId: string, round: number, answer: string): Promise<void> {
+  async saveAnswerForQuestion(
+    sessionId: string,
+    questionId: string,
+    round: number,
+    answer: string
+  ): Promise<DiscoveryQuestionsForRoundRow | null> {
     let sanitizedAnswer: string = answer;
     if (answer.trim().length === 0) {
       sanitizedAnswer = "No answer provided.";
@@ -309,6 +314,16 @@ export class DiscoveryService {
       answered_at: new Date().toISOString(),
     };
 
-    await this.supabase.from("discovery_questions").update(insertData).eq("id", questionId).select().single();
+    const { data: answerRecord, error } = await this.supabase
+      .from("discovery_questions")
+      .update(insertData)
+      .eq("id", questionId)
+      .select()
+      .single();
+
+    if (error) {
+      throw new Error(`DiscoveryService.saveAnswerToQuestion Failed: ${error.message}`);
+    }
+    return answerRecord;
   }
 }
