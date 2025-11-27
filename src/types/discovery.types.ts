@@ -43,8 +43,8 @@ export interface DiscoveryContextValue extends DiscoveryState {
   // Actions
   startSession: (description: string) => Promise<void>;
   submitAnswer: (questionId: string, answer: string) => Promise<void>;
-  submitMessage: (content: string) => Promise<void>;
+  // submitMessage: (content: string) => Promise<void>;
   loadSession: (sessionId: string) => Promise<void>;
-  abandonSession: () => Promise<void>;
+  // abandonSession: () => Promise<void>;
   clearError: () => void;
 }

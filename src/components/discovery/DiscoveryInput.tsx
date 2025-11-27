@@ -10,7 +10,7 @@ interface DiscoveryInputProps {
   placeholder?: string;
 }
 
-const DiscoveryInput = ({
+export const DiscoveryInput = ({
   onSubmit,
   maxLength = 10000,
   placeholder = "Start describing your project...",
@@ -63,5 +63,3 @@ const DiscoveryInput = ({
     </div>
   );
 };
-
-export default DiscoveryInput;
