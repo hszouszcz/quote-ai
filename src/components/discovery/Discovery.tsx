@@ -1,20 +1,19 @@
-import React, { createContext, useContext } from "react";
-import { DiscoveryProvider } from "./DiscoveryProvider";
+import React from "react";
+import { DiscoveryProvider, useDiscoveryContext } from "./DiscoveryProvider";
 import { ConversationWindow } from "./ConversationWindow";
 import { DiscoveryInput } from "./DiscoveryInput";
-import type { DiscoveryContextValue } from "@/types/discovery.types";
 
-// Context (tylko do użycia wewnętrznego)
-const DiscoveryContext = createContext<DiscoveryContextValue | null>(null);
+// // Context (tylko do użycia wewnętrznego)
+// const DiscoveryContext = createContext<DiscoveryContextValue | null>(null);
 
-// Hook do dostępu do contextu
-export const useDiscovery = () => {
-  const context = useContext(DiscoveryContext);
-  if (!context) {
-    throw new Error("useDiscovery must be used within Discovery component");
-  }
-  return context;
-};
+// // Hook do dostępu do contextu
+// export const useDiscovery = () => {
+//   const context = useContext(DiscoveryContext);
+//   if (!context) {
+//     throw new Error("useDiscovery must be used within Discovery component");
+//   }
+//   return context;
+// };
 
 // Compound Component API
 interface DiscoveryProps {
@@ -28,15 +27,15 @@ interface DiscoveryProps {
 const DiscoveryRoot = ({ userId, sessionId, children, onComplete, onError }: DiscoveryProps) => {
   return (
     <DiscoveryProvider userId={userId} sessionId={sessionId} onComplete={onComplete} onError={onError}>
-      <DiscoveryContext.Provider value={useDiscovery()}>{children}</DiscoveryContext.Provider>
+      {children}
     </DiscoveryProvider>
   );
 };
-
 // Sub-components
 DiscoveryRoot.Window = ConversationWindow;
 DiscoveryRoot.Input = DiscoveryInput;
-DiscoveryRoot.MessageList = MessageList;
-DiscoveryRoot.MessageItem = MessageItem;
+// DiscoveryRoot.MessageList = MessageList;
+// DiscoveryRoot.MessageItem = MessageItem;
 
+export const useDiscovery = useDiscoveryContext;
 export const Discovery = DiscoveryRoot;

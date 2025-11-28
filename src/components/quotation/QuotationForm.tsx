@@ -5,8 +5,7 @@ import { PlatformSelection } from "./PlatformSelection";
 import { EstimationTypeSelector } from "./EstimationTypeSelector";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import DiscoveryInput from "../discovery/DiscoveryInput";
-import { ConversationWindow } from "../discovery/ConversationWindow";
+import { Discovery } from "../discovery/Discovery";
 
 interface QuotationFormState extends CreateQuotationCommand {
   errors: {
@@ -18,7 +17,7 @@ interface QuotationFormState extends CreateQuotationCommand {
   isSubmitting: boolean;
 }
 
-export function QuotationForm() {
+export function QuotationForm({ userId }: { userId: string }) {
   const [formState, setFormState] = useState<QuotationFormState>({
     scope: "",
     platforms: [],
@@ -120,15 +119,17 @@ export function QuotationForm() {
           <CardTitle>Project Details</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
-          <ProjectDescriptionInput
+          {/* <ProjectDescriptionInput
             value={formState.scope}
             onChange={handleDescriptionChange}
             error={formState.errors.scope}
-          />
-          <ConversationWindow />
-          <DiscoveryInput />
+          /> */}
+          <Discovery userId={userId}>
+            <Discovery.Window />
+            <Discovery.Input />
+          </Discovery>
 
-          <PlatformSelection
+          {/* <PlatformSelection
             selectedPlatforms={formState.platforms}
             onChange={handlePlatformsChange}
             error={formState.errors.platforms}
@@ -138,15 +139,15 @@ export function QuotationForm() {
             value={formState.estimation_type}
             onChange={handleEstimationTypeChange}
             error={formState.errors.estimation_type}
-          />
+          /> */}
 
           {formState.errors.submit && <p className="text-sm text-red-500">{formState.errors.submit}</p>}
 
-          <div className="flex justify-end">
+          {/* <div className="flex justify-end">
             <Button type="submit" disabled={formState.isSubmitting}>
               {formState.isSubmitting ? "Creating..." : "Create Quotation"}
             </Button>
-          </div>
+          </div> */}
         </CardContent>
       </Card>
     </form>
