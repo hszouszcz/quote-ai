@@ -2,18 +2,8 @@ import React from "react";
 import { DiscoveryProvider, useDiscoveryContext } from "./DiscoveryProvider";
 import { ConversationWindow } from "./ConversationWindow";
 import { DiscoveryInput } from "./DiscoveryInput";
-
-// // Context (tylko do użycia wewnętrznego)
-// const DiscoveryContext = createContext<DiscoveryContextValue | null>(null);
-
-// // Hook do dostępu do contextu
-// export const useDiscovery = () => {
-//   const context = useContext(DiscoveryContext);
-//   if (!context) {
-//     throw new Error("useDiscovery must be used within Discovery component");
-//   }
-//   return context;
-// };
+import { ReactMemoizedMessageList } from "./DiscoveryMessageList";
+import { MemoizedDiscoveryMessageItem } from "./DiscoveryMessageItem";
 
 // Compound Component API
 interface DiscoveryProps {
@@ -34,8 +24,8 @@ const DiscoveryRoot = ({ userId, sessionId, children, onComplete, onError }: Dis
 // Sub-components
 DiscoveryRoot.Window = ConversationWindow;
 DiscoveryRoot.Input = DiscoveryInput;
-// DiscoveryRoot.MessageList = MessageList;
-// DiscoveryRoot.MessageItem = MessageItem;
+DiscoveryRoot.MessageList = ReactMemoizedMessageList;
+DiscoveryRoot.MessageItem = MemoizedDiscoveryMessageItem;
 
 export const useDiscovery = useDiscoveryContext;
 export const Discovery = DiscoveryRoot;

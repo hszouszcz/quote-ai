@@ -1,6 +1,5 @@
 import { cn } from "@/lib/utils";
-import { useDiscovery } from "./Discovery";
-import { MessageList } from "./MessageList";
+import { Discovery, useDiscovery } from "./Discovery";
 // import { MessageList } from "./MessageList";
 
 const ConversationWindow = ({ className }: { className?: string }) => {
@@ -38,7 +37,7 @@ const ConversationWindow = ({ className }: { className?: string }) => {
         )}
       </div>
       <div className="p-4">
-        <MessageList messages={messages} />
+        <Discovery.MessageList messages={messages} />
       </div>
     </div>
   );

@@ -1,11 +1,11 @@
 import type { DiscoveryMessage } from "@/types/discovery.types";
-import type React from "react";
+import React from "react";
 
 interface MessagesListProps {
   messages: DiscoveryMessage[];
 }
 
-export const MessageList: React.FC<MessagesListProps> = ({ messages }) => {
+const MessageList: React.FC<MessagesListProps> = ({ messages }) => {
   return (
     <div>
       {messages.map((message) => (
@@ -14,3 +14,5 @@ export const MessageList: React.FC<MessagesListProps> = ({ messages }) => {
     </div>
   );
 };
+
+export const ReactMemoizedMessageList = React.memo(MessageList);
