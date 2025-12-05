@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "../ui/button";
 import { PaperPlaneIcon } from "@radix-ui/react-icons";
 import { DiscovryTextArea } from "./DiscoveryTextArea";
+import { useDiscovery } from "./Discovery";
 
 interface DiscoveryInputProps {
   onSubmit?: (value: string) => void;
@@ -11,16 +12,21 @@ interface DiscoveryInputProps {
 }
 
 export const DiscoveryInput = ({
-  onSubmit,
   maxLength = 10000,
   placeholder = "Start describing your project...",
 }: DiscoveryInputProps) => {
+  const { startSession, session, submitAnswer } = useDiscovery();
   const [value, setValue] = useState("");
 
   const handleSubmit = () => {
     const trimmedValue = value.trim();
-    if (trimmedValue && onSubmit) {
-      onSubmit(trimmedValue);
+    if (trimmedValue) {
+      if (!session) {
+        startSession(trimmedValue);
+      } else {
+        // submitAnswer(trimmedValue);
+      }
+
       setValue("");
     }
   };

@@ -124,7 +124,7 @@ export function QuotationForm({ userId }: { userId: string }) {
             onChange={handleDescriptionChange}
             error={formState.errors.scope}
           /> */}
-          <Discovery userId={userId}>
+          <Discovery userId={userId} sessionId="cdf2c657-2ec1-4f41-8e5a-8203d889fbef">
             <Discovery.Window />
             <Discovery.Input />
           </Discovery>

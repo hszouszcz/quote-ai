@@ -7,6 +7,7 @@ import type {
 } from "@/types/discovery.types";
 import React from "react";
 import { DiscoveryClientService } from "@/lib/services/langchain/discovery.client.service";
+import { SessionClientService } from "@/lib/services/session.client.service";
 
 const DiscoveryContext = createContext<DiscoveryContextValue | null>(null);
 
@@ -18,6 +19,7 @@ interface DiscoveryProviderProps {
   onError?: (error: Error) => void;
 }
 const discoveryClientService = new DiscoveryClientService("api/discovery");
+const sessionClientService = new SessionClientService();
 
 export const DiscoveryProvider: React.FC<DiscoveryProviderProps> = ({
   userId,
@@ -66,7 +68,7 @@ export const DiscoveryProvider: React.FC<DiscoveryProviderProps> = ({
           initialDescription: description,
         });
 
-        setQuestions(response.questions);
+        setQuestions(response.questions); // Keep initial message
       } catch (err) {
         const error = err instanceof Error ? err : new Error("Failed to start session");
         setError(error);
@@ -118,7 +120,11 @@ export const DiscoveryProvider: React.FC<DiscoveryProviderProps> = ({
         setIsLoading(true);
         setError(null);
 
-        const sessionData = await discoveryClientService.getSession(sessionId);
+        const sessionData = await sessionClientService.getSessionById(sessionId);
+
+        if (sessionData === null) {
+          throw new Error("Session not found");
+        }
 
         setSession({
           id: sessionData.id,

@@ -64,7 +64,7 @@ export class DiscoveryClientService {
 
   async getSession(sessionId: string): Promise<DiscoverySessionRow> {
     return this.requestClient.makeRequest<DiscoverySessionRow>("session", {
-      method: "POST",
+      method: "GET",
       body: JSON.stringify(sessionId),
     });
   }

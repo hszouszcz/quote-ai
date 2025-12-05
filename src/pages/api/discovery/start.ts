@@ -1,17 +1,19 @@
 import type { APIRoute } from "astro";
 import { DiscoveryService } from "@/lib/services/langchain/discovery.service";
+import { DiscoveryInitialDataSchema } from "@/lib/schemas";
 
 export const POST: APIRoute = async ({ request, locals }) => {
   if (!locals.supabase || !locals.user) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
   }
 
-  const { initialDescription } = await request.json();
+  const body = DiscoveryInitialDataSchema.parse(await request.json());
+  const { initialDescription } = body;
 
   const discoveryService = new DiscoveryService(locals.supabase, locals.user.id);
 
   try {
-    const session = await discoveryService.startDiscovery(initialDescription);
+    const session = await discoveryService.startDiscovery({ initialDescription });
 
     const questions = await discoveryService.getQuestionsForRound(
       session.id,

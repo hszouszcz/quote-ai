@@ -17,7 +17,8 @@ export class ClientRequest {
 
   makeRequest = async <T>(endpoint: string, options: RequestInit = {}): Promise<T> => {
     try {
-      const response = await fetch(`${this.path}/${endpoint}`, {
+      const url = new URL(`${this.path}/${endpoint}`, window.location.origin);
+      const response = await fetch(url, {
         headers: {
           "Content-Type": "application/json",
           ...options.headers,
