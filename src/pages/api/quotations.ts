@@ -1,6 +1,6 @@
 import type { APIRoute } from "astro";
 import { z } from "zod";
-import type { Json } from "../../db/database.types";
+import type { Json } from "../../types/database.types";
 import { withErrorHandling, AuthorizationError } from "../../lib/errors";
 import { validateRequestBody, validateQueryParams, commonSchemas } from "../../lib/validation";
 import { createQuotationService } from "../../lib/services/quotation.service";
@@ -42,7 +42,14 @@ export const POST: APIRoute = withErrorHandling(async ({ request, locals }) => {
   const quotationService = createQuotationService(supabase);
 
   // Analyze project with AI
-  const aiAnalysis = await analyzeProject(scope, platforms, estimation_type, dynamic_attributes as Json, user.id);
+  const aiAnalysis = await analyzeProject(
+    supabase,
+    scope,
+    platforms,
+    estimation_type,
+    dynamic_attributes as Json,
+    user.id
+  );
 
   // Calculate total man_days and buffer
   const totalManDays = aiAnalysis.tasks.reduce((sum, task) => sum + (task.man_days || 0), 0);

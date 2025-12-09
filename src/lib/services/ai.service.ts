@@ -1,8 +1,6 @@
-import { supabaseClient } from "@/db/supabase.client";
-import type { Json } from "../../db/database.types";
+import type { SupabaseClient } from "@/db/supabase.client";
+import type { Json } from "../../types/database.types";
 import { DiscoveryService } from "./langchain/discovery.service";
-import { ProjectModulesService } from "./langchain/modulesExtraction.service";
-import { ProjectAnalysisService } from "./langchain/projectAnalysis.service";
 import { OpenRouterService } from "./openrouter/service";
 import type { OpenRouterConfig, ResponsePayload, MistralResponse } from "./openrouter/types";
 
@@ -83,6 +81,7 @@ function extractJsonFromText(text: string): string {
  * Analyzes project scope and generates estimation with tasks using OpenRouter LLM
  */
 export async function analyzeProject(
+  supabase: SupabaseClient,
   scope: string,
   platforms: string[],
   estimationType: string,
@@ -145,7 +144,7 @@ Analyze this project and provide a detailed estimation in the required JSON form
       throw new Error("Invalid response format: missing tasks array");
     }
 
-    const langchainService = new DiscoveryService(supabaseClient, userId);
+    const langchainService = new DiscoveryService(supabase, userId);
     const discoverySession = await langchainService.startDiscovery({
       initialDescription: `Project Details:
     - Scope: ${scope}

@@ -1,6 +1,6 @@
 import type { AstroCookies } from "astro";
 import { createServerClient, type CookieOptionsWithName } from "@supabase/ssr";
-import type { Database } from "../db/database.types";
+import type { Database } from "../types/database.types";
 
 export const cookieOptions: CookieOptionsWithName = {
   name: "sb-auth",

@@ -1,8 +1,8 @@
 import { PostgrestError } from "@supabase/supabase-js";
 import type { UpdateQuotationInput } from "../schemas/quotation.schema";
 import type { QuotationDTO } from "../../types";
-import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Json } from "../../db/database.types";
+import type { SupabaseClient } from "@/db/supabase.client";
+import type { Json } from "../../types/database.types";
 import { DatabaseError, ValidationError } from "../errors";
 
 export class QuotationNotFoundError extends Error {
