@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@/db/supabase.client";
-import type { DiscoverySessionRow } from "@/types";
+import type { DiscoverySessionRow, ListSessionsResult } from "@/types";
+import type { ListSessionsQueryParams } from "../schemas/session.schema";
 
 export class SessionService {
   constructor(private readonly supabaseClient: SupabaseClient) {}
@@ -78,23 +79,4 @@ export class SessionService {
       throw new Error("Failed to delete session");
     }
   }
-}
-// Types
-export interface ListSessionsQueryParams {
-  userId: string;
-  page?: number;
-  limit?: number;
-  status?: "in_progress" | "completed" | "abandoned";
-  sortBy?: "created_at" | "updated_at" | "completeness_score";
-  sortOrder?: "asc" | "desc";
-}
-
-export interface ListSessionsResult {
-  data: DiscoverySessionRow[];
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
 }

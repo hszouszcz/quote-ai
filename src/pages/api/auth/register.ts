@@ -1,6 +1,6 @@
 import type { APIRoute } from "astro";
 import { createSupabaseServerInstance } from "@/lib/supabase";
-import { registerSchema } from "@/lib/schemas/auth";
+import { registerSchema } from "@/lib/schemas/auth.schema";
 
 export const prerender = false;
 

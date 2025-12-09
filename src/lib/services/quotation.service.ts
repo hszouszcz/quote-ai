@@ -3,6 +3,7 @@ import type { UpdateQuotationInput } from "../schemas/quotation.schema";
 import type { QuotationDTO } from "../../types";
 import type { SupabaseClient } from "@/db/supabase.client";
 import type { Json } from "../../types/database.types";
+import type { ListResult } from "../../types/shared.types";
 import { DatabaseError, ValidationError } from "../errors";
 
 export class QuotationNotFoundError extends Error {
@@ -250,17 +251,7 @@ export interface ListQuotationsParams {
   filter?: string;
 }
 
-export interface PaginationMeta {
-  page: number;
-  limit: number;
-  total: number;
-  totalPages: number;
-}
-
-export interface ListQuotationsResult {
-  data: QuotationDTO[];
-  pagination: PaginationMeta;
-}
+export type ListQuotationsResult = ListResult<QuotationDTO>;
 
 // Types for related objects
 interface QuotationPlatform {

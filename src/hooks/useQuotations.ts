@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import type { QuotationDTO } from "@/types";
+import type { PaginationMeta } from "@/types/shared.types";
 import { quotationClientService } from "@/lib/services/quotation.client.service";
 
 // Extend Error for API error type
@@ -14,13 +15,6 @@ interface FiltersVM {
   filter: string;
 }
 
-interface PaginationMetadata {
-  total: number;
-  totalPages: number;
-  currentPage: number;
-  limit: number;
-}
-
 interface UseQuotationsResult {
   quotes: QuotationDTO[];
   isLoading: boolean;
@@ -29,7 +23,7 @@ interface UseQuotationsResult {
     code?: string;
   } | null;
   filters: FiltersVM;
-  pagination: PaginationMetadata;
+  pagination: PaginationMeta;
   setFilters: (newFilters: Partial<FiltersVM>) => void;
   retry: () => void;
 }
@@ -46,10 +40,10 @@ export function useQuotations(userId?: string): UseQuotationsResult {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<{ message: string; code?: string } | null>(null);
   const [filters, setFilters] = useState<FiltersVM>(DEFAULT_FILTERS);
-  const [pagination, setPagination] = useState<PaginationMetadata>({
+  const [pagination, setPagination] = useState<PaginationMeta>({
     total: 0,
     totalPages: 0,
-    currentPage: 1,
+    page: 1,
     limit: DEFAULT_FILTERS.limit,
   });
   const [retryCounter, setRetryCounter] = useState(0);
@@ -74,7 +68,7 @@ export function useQuotations(userId?: string): UseQuotationsResult {
         setPagination({
           total: data.total,
           totalPages: data.totalPages,
-          currentPage: filters.page,
+          page: filters.page,
           limit: filters.limit,
         });
       } catch (err) {
@@ -93,7 +87,7 @@ export function useQuotations(userId?: string): UseQuotationsResult {
         setPagination({
           total: 0,
           totalPages: 0,
-          currentPage: 1,
+          page: 1,
           limit: filters.limit,
         });
       } finally {

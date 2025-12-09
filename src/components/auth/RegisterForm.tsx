@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { registerSchema, type RegisterFormData } from "@/lib/schemas/auth";
+import { registerSchema, type RegisterFormData } from "@/lib/schemas/auth.schema";
 
 export function RegisterForm() {
   const [isLoading, setIsLoading] = useState(false);

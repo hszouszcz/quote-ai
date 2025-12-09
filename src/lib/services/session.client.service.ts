@@ -1,6 +1,7 @@
 import type { DiscoverySessionRow } from "@/types";
 import { ClientRequest } from "../utils/makeClientRequest";
-import type { ListSessionsQueryParams, ListSessionsResult } from "./sesssion.service";
+import type { ListSessionsQueryParams } from "../schemas/session.schema";
+import type { ListSessionsResult } from "./sesssion.service";
 
 export class SessionClientService {
   private requestClient: ClientRequest;
