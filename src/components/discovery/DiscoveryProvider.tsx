@@ -1,10 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
-import type {
-  DiscoveryContextValue,
-  DiscoveryMessage,
-  DiscoveryQuestion,
-  DiscoverySession,
-} from "@/types/discovery.types";
+import type { DiscoveryContextValue, DiscoveryMessage, DiscoverySession, DiscoveryQuestion } from "@/types";
 import React from "react";
 import { DiscoveryClientService } from "@/lib/services/langchain/discovery.client.service";
 import { SessionClientService } from "@/lib/services/session.client.service";
@@ -18,6 +13,7 @@ interface DiscoveryProviderProps {
   onComplete?: (sessionId: string) => void;
   onError?: (error: Error) => void;
 }
+
 const discoveryClientService = new DiscoveryClientService("api/discovery");
 const sessionClientService = new SessionClientService();
 
@@ -25,7 +21,6 @@ export const DiscoveryProvider: React.FC<DiscoveryProviderProps> = ({
   userId,
   sessionId: initialSessionId,
   children,
-  onComplete,
   onError,
 }) => {
   const [session, setSession] = useState<DiscoverySession | null>(null);
@@ -35,11 +30,45 @@ export const DiscoveryProvider: React.FC<DiscoveryProviderProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
+  const loadSession = useCallback(
+    async (sessionId: string) => {
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        const sessionData = await sessionClientService.getSessionById(sessionId);
+
+        if (sessionData === null) {
+          throw new Error("Session not found");
+        }
+
+        setSession({
+          id: sessionData.id,
+          userId: userId,
+          status: sessionData.status as "in_progress" | "completed" | "abandoned",
+          currentRound: sessionData.current_round,
+          completenessScore: sessionData.completeness_score || undefined,
+          currentReasoning: sessionData.current_reasoning || undefined,
+          initialDescription: sessionData.initial_description,
+        });
+
+        // TODO: Load messages and questions from API
+      } catch (err) {
+        const error = err instanceof Error ? err : new Error("Failed to load session");
+        setError(error);
+        onError?.(error);
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [userId, onError]
+  );
+
   useEffect(() => {
     if (initialSessionId) {
       loadSession(initialSessionId);
     }
-  }, [initialSessionId]);
+  }, [initialSessionId, loadSession]);
 
   const startSession = useCallback(
     async (description: string) => {
@@ -63,12 +92,12 @@ export const DiscoveryProvider: React.FC<DiscoveryProviderProps> = ({
         setSession({
           id: response.sessionId,
           userId: userId,
-          status: response.status,
+          status: response.status as "in_progress" | "completed" | "abandoned",
           currentRound: response.currentRound,
           initialDescription: description,
         });
 
-        setQuestions(response.questions); // Keep initial message
+        setQuestions(response.questions);
       } catch (err) {
         const error = err instanceof Error ? err : new Error("Failed to start session");
         setError(error);
@@ -111,41 +140,7 @@ export const DiscoveryProvider: React.FC<DiscoveryProviderProps> = ({
         setIsSubmitting(false);
       }
     },
-    [session, onComplete, onError]
-  );
-
-  const loadSession = useCallback(
-    async (sessionId: string) => {
-      try {
-        setIsLoading(true);
-        setError(null);
-
-        const sessionData = await sessionClientService.getSessionById(sessionId);
-
-        if (sessionData === null) {
-          throw new Error("Session not found");
-        }
-
-        setSession({
-          id: sessionData.id,
-          userId: userId,
-          status: sessionData.status,
-          currentRound: sessionData.current_round,
-          completenessScore: sessionData.completeness_score || undefined,
-          currentReasoning: sessionData.current_reasoning || undefined,
-          initialDescription: sessionData.initial_description,
-        });
-
-        // TODO: Load messages and questions from API
-      } catch (err) {
-        const error = err instanceof Error ? err : new Error("Failed to load session");
-        setError(error);
-        onError?.(error);
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [userId, onError]
+    [session, onError]
   );
 
   const clearError = useCallback(() => {
@@ -164,6 +159,7 @@ export const DiscoveryProvider: React.FC<DiscoveryProviderProps> = ({
     loadSession,
     clearError,
   };
+
   return <DiscoveryContext.Provider value={value}>{children}</DiscoveryContext.Provider>;
 };
 
