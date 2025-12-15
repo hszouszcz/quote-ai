@@ -138,3 +138,15 @@ export const PartialAnalysisCompletionResponseSchema = z.object({
 });
 
 export type PartialAnalysisCompletionType = z.infer<typeof PartialAnalysisCompletionResponseSchema>;
+
+export const ConversationMessageLogSchema = z.array(
+  z.object({
+    id: z.string().uuid().describe("Unique identifier for the message"),
+    role: z.enum(["user", "assistant", "system"]).describe("Role of the message sender"),
+    content: z.string().describe("Content of the message"),
+    timestamp: z.string().describe("ISO timestamp of when the message was created"),
+    round: z.number().optional().describe("Optional round number for discovery sessions"),
+    questionId: z.string().uuid().optional().describe("Optional question ID if applicable"),
+    answerId: z.string().uuid().optional().describe("Optional answer ID if applicable"),
+  })
+);

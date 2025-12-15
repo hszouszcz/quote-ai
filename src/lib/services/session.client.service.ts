@@ -12,10 +12,9 @@ export class SessionClientService {
     sessionId: string
   ): Promise<{ session: DiscoverySessionRow; logs: DiscoveryConversationLogRow[] }> {
     return this.requestClient.makeRequest<{ session: DiscoverySessionRow; logs: DiscoveryConversationLogRow[] }>(
-      "session",
+      `${sessionId}`,
       {
         method: "GET",
-        body: JSON.stringify(sessionId),
       }
     );
   }
