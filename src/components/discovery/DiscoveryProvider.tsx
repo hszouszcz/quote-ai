@@ -36,23 +36,32 @@ export const DiscoveryProvider: React.FC<DiscoveryProviderProps> = ({
         setIsLoading(true);
         setError(null);
 
-        const sessionData = await sessionClientService.getSessionById(sessionId);
+        const { session, logs } = await sessionClientService.getSessionById(sessionId);
 
-        if (sessionData === null) {
+        if (session === null) {
           throw new Error("Session not found");
         }
 
         setSession({
-          id: sessionData.id,
+          id: session.id,
           userId: userId,
-          status: sessionData.status as "in_progress" | "completed" | "abandoned",
-          currentRound: sessionData.current_round,
-          completenessScore: sessionData.completeness_score || undefined,
-          currentReasoning: sessionData.current_reasoning || undefined,
-          initialDescription: sessionData.initial_description,
+          status: session.status as "in_progress" | "completed" | "abandoned",
+          currentRound: session.current_round,
+          completenessScore: session.completeness_score || undefined,
+          currentReasoning: session.current_reasoning || undefined,
+          initialDescription: session.initial_description,
         });
-
-        // TODO: Load messages and questions from API
+        setMessages(
+          logs.map((log) => ({
+            id: log.id,
+            role: log.role as "user" | "assistant" | "system",
+            content: log.content,
+            timestamp: new Date(log.created_at),
+            round: undefined,
+            questionId: undefined,
+            answerId: undefined,
+          }))
+        );
       } catch (err) {
         const error = err instanceof Error ? err : new Error("Failed to load session");
         setError(error);

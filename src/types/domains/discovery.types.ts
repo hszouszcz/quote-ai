@@ -15,6 +15,7 @@ export type DiscoveryQuestionsForRoundInsert = Database["public"]["Tables"]["dis
 export type DiscoveryQuestionsForRoundUpdate = Database["public"]["Tables"]["discovery_questions"]["Update"];
 
 export type DiscoveryConversationLogInsert = Database["public"]["Tables"]["discovery_conversation_log"]["Insert"];
+export type DiscoveryConversationLogRow = Database["public"]["Tables"]["discovery_conversation_log"]["Row"];
 
 // ===========================
 // UI State Types

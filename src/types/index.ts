@@ -48,6 +48,7 @@ export type {
   DiscoveryQuestionsForRoundInsert,
   DiscoveryQuestionsForRoundUpdate,
   DiscoveryConversationLogInsert,
+  DiscoveryConversationLogRow,
   DiscoveryMessage,
   DiscoveryQuestion,
   DiscoverySession,

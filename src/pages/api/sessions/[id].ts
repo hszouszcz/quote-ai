@@ -1,3 +1,4 @@
+import { DiscoveryService } from "@/lib/services/langchain/discovery.service";
 import { SessionService } from "@/lib/services/sesssion.service";
 import type { APIRoute } from "astro";
 
@@ -14,13 +15,15 @@ export const GET: APIRoute = async ({ params, locals }) => {
 
   try {
     const sessionService = new SessionService(locals.supabase);
+    const discoveryService = new DiscoveryService(locals.supabase, locals.user.id);
     const session = await sessionService.getSessionById(params.id, locals.user.id);
+    const conversationLog = await discoveryService.getConversationHistoryForDiscoverySession(params.id);
 
     if (!session) {
       return new Response(JSON.stringify({ error: "Session not found" }), { status: 404 });
     }
 
-    return new Response(JSON.stringify(session), { status: 200 });
+    return new Response(JSON.stringify({ session, conversationLog }), { status: 200 });
   } catch (error) {
     return new Response(
       JSON.stringify({

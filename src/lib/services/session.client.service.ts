@@ -1,4 +1,4 @@
-import type { DiscoverySessionRow, ListSessionsResult } from "@/types";
+import type { DiscoveryConversationLogRow, DiscoverySessionRow, ListSessionsResult } from "@/types";
 import { ClientRequest } from "../utils/makeClientRequest";
 import type { ListSessionsQueryParams } from "../schemas/session.schema";
 
@@ -8,10 +8,16 @@ export class SessionClientService {
     this.requestClient = new ClientRequest("/api/sessions");
   }
 
-  async getSessionById(sessionId: string): Promise<DiscoverySessionRow | null> {
-    return this.requestClient.makeRequest<DiscoverySessionRow | null>(`/${sessionId}`, {
-      method: "GET",
-    });
+  async getSessionById(
+    sessionId: string
+  ): Promise<{ session: DiscoverySessionRow; logs: DiscoveryConversationLogRow[] }> {
+    return this.requestClient.makeRequest<{ session: DiscoverySessionRow; logs: DiscoveryConversationLogRow[] }>(
+      "session",
+      {
+        method: "GET",
+        body: JSON.stringify(sessionId),
+      }
+    );
   }
 
   async listSessionsByUser(params?: ListSessionsQueryParams): Promise<ListSessionsResult | null> {

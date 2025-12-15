@@ -33,7 +33,7 @@ type DiscoveryQuestionsForRoundInsert = Database["public"]["Tables"]["discovery_
 type DiscoveryQuestionsForRoundUpdate = Database["public"]["Tables"]["discovery_questions"]["Update"];
 
 type DiscoveryConversationLogInsert = Database["public"]["Tables"]["discovery_conversation_log"]["Insert"];
-
+type DiscoveryConversationLogRow = Database["public"]["Tables"]["discovery_conversation_log"]["Row"];
 export class DiscoveryService {
   // 👉 2. Constructor używa typowanego klienta z naszego projektu
   constructor(
@@ -325,5 +325,18 @@ export class DiscoveryService {
       throw new Error(`DiscoveryService.saveAnswerToQuestion Failed: ${error.message}`);
     }
     return answerRecord;
+  }
+
+  async getConversationHistoryForDiscoverySession(sessionId: string): Promise<DiscoveryConversationLogRow[]> {
+    const { data, error } = await this.supabase
+      .from("discovery_conversation_log")
+      .select("*")
+      .eq("session_id", sessionId)
+      .order("created_at", { ascending: true });
+
+    if (error) {
+      throw new Error(`DiscoveryService.getConversationHistoryForDiscoverySession Failed: ${error.message}`);
+    }
+    return data || [];
   }
 }
