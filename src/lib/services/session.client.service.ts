@@ -10,13 +10,13 @@ export class SessionClientService {
 
   async getSessionById(
     sessionId: string
-  ): Promise<{ session: DiscoverySessionRow; logs: DiscoveryConversationLogRow[] }> {
-    return this.requestClient.makeRequest<{ session: DiscoverySessionRow; logs: DiscoveryConversationLogRow[] }>(
-      `${sessionId}`,
-      {
-        method: "GET",
-      }
-    );
+  ): Promise<{ session: DiscoverySessionRow; conversationLog: DiscoveryConversationLogRow[] }> {
+    return this.requestClient.makeRequest<{
+      session: DiscoverySessionRow;
+      conversationLog: DiscoveryConversationLogRow[];
+    }>(`${sessionId}`, {
+      method: "GET",
+    });
   }
 
   async listSessionsByUser(params?: ListSessionsQueryParams): Promise<ListSessionsResult | null> {

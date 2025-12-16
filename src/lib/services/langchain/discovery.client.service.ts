@@ -3,7 +3,7 @@
 // wywolac answer endpoint
 
 import { ClientRequest } from "@/lib/utils/makeClientRequest";
-import type { DiscoverySessionRow, DiscoveryConversationLogRow } from "@/types";
+import type { DiscoverySessionRow } from "@/types";
 interface StartDiscoveryRequest {
   initialDescription: string;
 }

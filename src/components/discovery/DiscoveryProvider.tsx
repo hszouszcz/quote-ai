@@ -36,7 +36,7 @@ export const DiscoveryProvider: React.FC<DiscoveryProviderProps> = ({
         setIsLoading(true);
         setError(null);
 
-        const { session, logs } = await sessionClientService.getSessionById(sessionId);
+        const { session, conversationLog } = await sessionClientService.getSessionById(sessionId);
 
         if (session === null) {
           throw new Error("Session not found");
@@ -52,7 +52,7 @@ export const DiscoveryProvider: React.FC<DiscoveryProviderProps> = ({
           initialDescription: session.initial_description,
         });
         setMessages(
-          logs.map((log) => ({
+          conversationLog.map((log) => ({
             id: log.id,
             role: log.role as "user" | "assistant" | "system",
             content: log.content,

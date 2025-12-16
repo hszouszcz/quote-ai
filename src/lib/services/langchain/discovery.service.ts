@@ -85,6 +85,17 @@ export class DiscoveryService {
         throw new Error("DiscoveryService.startDiscovery No data returned from insert");
       }
 
+      const { error: logError } = await this.supabase.from("discovery_conversation_log").insert({
+        session_id: sessionData.id,
+        content: validatedData.initialDescription,
+        role: "user",
+        round_number: 1,
+      });
+
+      if (logError) {
+        throw new Error(`DiscoveryService.startDiscovery Failed to create conversation log: ${logError.message}`);
+      }
+
       return sessionData; // Zwracamy typowany obiekt
     } catch (error) {
       if (error instanceof z.ZodError) {
